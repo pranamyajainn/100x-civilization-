@@ -1,20 +1,30 @@
 'use client';
 import { HeroMesh } from './hero-mesh';
-import { WaitlistForm } from './waitlist-form';
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
+import { ScrambleText } from './scramble';
+import { MagneticButton } from './magnetic-button';
+import { useModalStore } from '@/lib/store';
+import dynamic from 'next/dynamic';
+
+const Hero3D = dynamic(() => import('./hero-3d'), { ssr: false, loading: () => <div className="w-full h-full min-h-[400px]" /> });
 
 export function Hero() {
   const headline = "The 100x Civilization".split(" ");
   const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => setIsMounted(true), []);
+  const { openModal } = useModalStore();
+
+  useEffect(() => {
+    let timeoutId = setTimeout(() => setIsMounted(true), 0);
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   return (
     <section className="relative min-h-[90vh] flex items-center pt-32 pb-16 overflow-hidden">
       <HeroMesh />
       
       <div className="max-w-7xl mx-auto px-6 md:px-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 relative z-10">
-        <div className="flex flex-col justify-center">
+        <div className="flex flex-col justify-center items-start">
           <motion.div 
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
@@ -57,10 +67,21 @@ export function Hero() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
+            className="mb-8"
+          >
+            <MagneticButton onClick={openModal}>
+              Request access
+            </MagneticButton>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
             className="flex items-center gap-4 text-xs sm:text-sm font-mono text-brand-muted"
           >
             <span className="flex h-px w-8 bg-brand-border hidden sm:block" />
-            Invite-only. Cohort verification required.
+            <ScrambleText text="Invite-only. Cohort verification required." duration={1500} />
           </motion.div>
         </div>
         
@@ -70,8 +91,8 @@ export function Hero() {
           transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
           className="flex items-center justify-center w-full lg:justify-end"
         >
-          <div className="w-full max-w-md">
-            <WaitlistForm />
+          <div className="w-full max-w-md h-full min-h-[400px]">
+            <Hero3D />
           </div>
         </motion.div>
       </div>

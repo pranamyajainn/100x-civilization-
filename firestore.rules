@@ -5,9 +5,17 @@ service cloud.firestore {
     match /{document=**} {
       allow read, write: if false; 
     }
+
+    match /metadata/{docId} {
+      allow read: if true;
+      allow update: if true;
+      allow create: if true;
+    }
     
     // Waitlist Signups (Create Only)
     match /waitlist_signups/{signupId} {
+      allow read: if true;
+      allow update, delete: if false;
       allow create: if 
         request.resource.data.keys().hasAll(['fullName', 'email', 'cohort', 'role', 'createdAt']) &&
         request.resource.data.fullName is string && request.resource.data.fullName.size() >= 2 && request.resource.data.fullName.size() <= 80 &&
@@ -19,8 +27,6 @@ service cloud.firestore {
           (request.resource.data.referral is string && request.resource.data.referral.size() <= 200)
         ) &&
         request.resource.data.createdAt == request.time;
-      
-      allow read, update, delete: if false;
     }
   }
 }

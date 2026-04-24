@@ -54,11 +54,12 @@ export function HeroMesh() {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) return;
 
-    if (!containerRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
 
     const renderer = new Renderer({ alpha: true, dpr: typeof window !== 'undefined' ? window.devicePixelRatio : 1 });
     const gl = renderer.gl;
-    containerRef.current.appendChild(gl.canvas);
+    container.appendChild(gl.canvas);
 
     const geometry = new Triangle(gl);
     const program = new Program(gl, {
@@ -72,8 +73,8 @@ export function HeroMesh() {
     const mesh = new Mesh(gl, { geometry, program });
 
     function resize() {
-      if (!containerRef.current) return;
-      renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
+      if (!container) return;
+      renderer.setSize(container.clientWidth, container.clientHeight);
     }
     window.addEventListener('resize', resize, false);
     resize();
@@ -109,8 +110,8 @@ export function HeroMesh() {
       window.removeEventListener('resize', resize);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       observer.disconnect();
-      if (containerRef.current && gl.canvas.parentNode === containerRef.current) {
-        containerRef.current.removeChild(gl.canvas);
+      if (container && gl.canvas.parentNode === container) {
+        container.removeChild(gl.canvas);
       }
     };
   }, []);

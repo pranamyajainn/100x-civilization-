@@ -1,3 +1,4 @@
+import { LenisProvider } from '@/components/lenis-provider';
 import type { Metadata, Viewport } from "next";
 import { Inter, Outfit, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
@@ -28,9 +29,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${outfit.variable} ${jetbrains.variable} dark scroll-smooth`}>
+    <html lang="en" className={`${inter.variable} ${outfit.variable} ${jetbrains.variable} dark`}>
       <body className="bg-brand-black text-brand-white antialiased selection:bg-brand-neon selection:text-brand-black">
-        {children}
+        <LenisProvider>
+          {children}
+        </LenisProvider>
       </body>
     </html>
   );

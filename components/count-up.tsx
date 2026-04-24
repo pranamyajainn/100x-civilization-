@@ -11,7 +11,7 @@ export function CountUp({ end, suffix = '', duration = 1.2, isFloat = false }: {
     if (!isInView) return;
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) {
-      setValue(end);
+      setTimeout(() => setValue(end), 0);
       return;
     }
 

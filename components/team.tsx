@@ -5,9 +5,9 @@ import { motion, useMotionValue } from 'motion/react';
 
 const team = [
   {
-    name: "Pranamya Jain",
+    name: "Pranamya",
     role: "AI Solutions Architect",
-    desc: "Full-stack AI builder, agentic workflows, RAG, multi-LLM orchestration. Part of the wealthiest community in India, bringing the closed-loop economic playbook to 100x.",
+    desc: "Full-stack AI builder, agentic workflows, RAG, multi-LLM orchestration. Bringing the closed-loop economic playbook to 100x.",
     tag: "Mini Hackathon Winner"
   },
   {
@@ -31,18 +31,51 @@ const team = [
 ];
 
 export function Team() {
-  return (
-    <section className="max-w-7xl mx-auto px-6 md:px-12 py-12 md:py-24">
-      <ScrollReveal className="mb-12 md:mb-16">
-        <h2 className="text-3xl md:text-4xl font-display font-medium text-brand-white text-balance">
-          Built by cohort members, for cohort members.
-        </h2>
-      </ScrollReveal>
+  const [particles, setParticles] = useState<{x: number, y: number, speed: number, size: number}[]>([]);
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 scale-100">
-        {team.map((member, i) => (
-          <TeamCard key={i} member={member} delay={i * 0.1} />
-        ))}
+  useEffect(() => {
+    // Generate static particles array on mount to avoid hydration mismatch
+    const p = Array.from({ length: 150 }).map(() => ({
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      speed: 0.1 + Math.random() * 0.3,
+      size: 1 + Math.random() * 2
+    }));
+    setParticles(p);
+  }, []);
+
+  return (
+    <section className="relative max-w-7xl mx-auto px-6 md:px-12 py-12 md:py-24 overflow-hidden">
+      {particles.length > 0 && (
+         <div className="absolute inset-0 pointer-events-none z-0 opacity-30">
+           {particles.map((p, i) => (
+             <motion.div
+               key={i}
+               className="absolute bg-brand-white rounded-full mix-blend-screen"
+               style={{
+                 left: `${p.x}%`,
+                 top: `${p.y}%`,
+                 width: p.size,
+                 height: p.size,
+               }}
+               animate={{ y: ['0%', '-20%'], opacity: [0, 0.8, 0] }}
+               transition={{ duration: 10 / p.speed, repeat: Infinity, ease: 'linear', delay: -Math.random() * 20 }}
+             />
+           ))}
+         </div>
+      )}
+      <div className="relative z-10">
+        <ScrollReveal className="mb-12 md:mb-16">
+          <h2 className="text-3xl md:text-4xl font-display font-medium text-brand-white text-balance">
+            Built by cohort members, for cohort members.
+          </h2>
+        </ScrollReveal>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 scale-100">
+          {team.map((member, i) => (
+            <TeamCard key={i} member={member} delay={i * 0.1} />
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -57,7 +90,8 @@ function TeamCard({ member, delay }: { member: typeof team[0], delay: number }) 
   const [prefersReduced, setPrefersReduced] = useState(true);
 
   useEffect(() => {
-    setPrefersReduced(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const timeoutId = setTimeout(() => setPrefersReduced(window.matchMedia('(prefers-reduced-motion: reduce)').matches), 0);
+    return () => clearTimeout(timeoutId);
   }, []);
 
   function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {

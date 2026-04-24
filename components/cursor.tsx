@@ -20,7 +20,7 @@ export function Cursor() {
     
     if (isTouchDevice || prefersReducedMotion) return;
     
-    setIsVisible(true);
+    setTimeout(() => setIsVisible(true), 0);
 
     const moveCursor = (e: MouseEvent) => {
       cursorX.set(e.clientX - 16);

@@ -15,7 +15,8 @@ export function MagneticButton({ children, className, onClick }: { children: Rea
   const ySpring = useSpring(y, springConfig);
 
   useEffect(() => {
-    setPrefersReduced(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const timeoutId = setTimeout(() => setPrefersReduced(window.matchMedia('(prefers-reduced-motion: reduce)').matches), 0);
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {

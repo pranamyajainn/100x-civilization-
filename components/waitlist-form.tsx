@@ -1,15 +1,32 @@
 'use client';
 
-import { Suspense, useState } from 'react';
-import { motion } from 'motion/react';
-import { collection, addDoc, serverTimestamp, getFirestore } from 'firebase/firestore';
+import { Suspense, useState, useEffect } from 'react';
+import { motion, useAnimation, useSpring, useTransform } from 'motion/react';
+import { collection, doc, runTransaction, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
+import { useModalStore } from '@/lib/store';
+import { MagneticButton } from './magnetic-button';
+import { LiveCounter } from './live-counter';
+
+// Short hash for referral code
+function shortHash(str: string) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash).toString(36).substring(0, 6).toUpperCase();
+}
 
 export function WaitlistForm() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [position, setPosition] = useState<number | null>(null);
+  const [referralBoosts, setReferralBoosts] = useState<number>(0);
   const [errorMsg, setErrorMsg] = useState('');
+  const [docId, setDocId] = useState<string | null>(null);
+  const [refCode, setRefCode] = useState<string>('');
+  
+  const { isOpen } = useModalStore();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -19,15 +36,33 @@ export function WaitlistForm() {
     referral: ''
   });
 
-  const generatePosition = (email: string) => {
-    // Deterministic pseudo-position based on email to stay strictly front-end
-    let hash = 0;
-    for (let i = 0; i < email.length; i++) {
-        hash = email.charCodeAt(i) + ((hash << 5) - hash);
+  // Check LocalStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('signup_data');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (data && data.position) {
+          setPosition(data.position);
+          setDocId(data.id);
+          setRefCode(data.refCode || shortHash(data.id || 'fallback'));
+          setStatus('success');
+        }
+      } catch(e) {}
     }
-    // Scale into a plausible starting number (e.g., 2,000 to 15,000)
-    return Math.abs(hash % 13000) + 2450; 
-  };
+  }, []);
+
+  // Listen to referral boosts if signed up
+  useEffect(() => {
+    if (status === 'success' && docId) {
+       const u = onSnapshot(doc(db, 'waitlist_signups', docId), (snap) => {
+          if (snap.exists()) {
+             setReferralBoosts(snap.data().referralsCount || 0);
+          }
+       });
+       return () => u();
+    }
+  }, [status, docId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,16 +70,41 @@ export function WaitlistForm() {
     setErrorMsg('');
 
     try {
-      await addDoc(collection(db, 'waitlist_signups'), {
-        fullName: formData.fullName.trim(),
-        email: formData.email.trim().toLowerCase(),
-        cohort: formData.cohort,
-        role: formData.role,
-        referral: formData.referral.trim() || null,
-        createdAt: serverTimestamp(),
+      const counterRef = doc(db, 'metadata', 'signups');
+      const signupId = doc(collection(db, 'waitlist_signups')).id;
+      const refC = shortHash(signupId);
+      
+      const newPos = await runTransaction(db, async (transaction) => {
+        const counterDoc = await transaction.get(counterRef);
+        let count = 0;
+        if (counterDoc.exists()) {
+          count = counterDoc.data().count || 0;
+        }
+        
+        const nextPos = count + 1;
+        
+        transaction.set(counterRef, { count: nextPos }, { merge: true });
+        
+        transaction.set(doc(db, 'waitlist_signups', signupId), {
+          fullName: formData.fullName.trim(),
+          email: formData.email.trim().toLowerCase(),
+          cohort: formData.cohort,
+          role: formData.role,
+          referral: formData.referral.trim() || null,
+          createdAt: serverTimestamp(),
+          position: nextPos,
+          referralCode: refC,
+          referralsCount: 0
+        });
+        
+        return nextPos;
       });
       
-      setPosition(generatePosition(formData.email));
+      setPosition(newPos);
+      setDocId(signupId);
+      setRefCode(refC);
+      
+      localStorage.setItem('signup_data', JSON.stringify({ id: signupId, position: newPos, refCode: refC }));
       setStatus('success');
     } catch (err: any) {
       console.error(err);
@@ -57,69 +117,84 @@ export function WaitlistForm() {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const shareText = `Join the 100x Civilization. Use my referral code: ${refCode}`;
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: '100x Civilization',
+        text: shareText,
+        url: window.location.href,
+      }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(shareText + ' ' + window.location.href);
+      alert('Copied to clipboard!');
+    }
+  };
+
   if (status === 'success') {
-    return (
-      <motion.div 
-        initial={{ opacity: 0, y: 10 }} 
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-8 bg-brand-white/5 backdrop-blur-2xl border border-brand-border rounded-sm shadow-2xl"
-      >
-        <div className="w-16 h-16 rounded-full bg-brand-neon/10 flex items-center justify-center mb-6">
-          <svg className="w-8 h-8 text-brand-neon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h3 className="font-display text-2xl md:text-3xl font-bold text-brand-white mb-2">Request Received</h3>
-        <p className="text-brand-muted text-sm md:text-base mb-8 max-w-sm">
-          You are on the waitlist. We process verifications in batches to maintain exclusivity.
-        </p>
-        
-        <div className="bg-brand-black border border-brand-border p-6 w-full max-w-xs shadow-2xl relative overflow-hidden group">
-          <div className="absolute inset-0 bg-brand-neon/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <p className="text-xs text-brand-muted uppercase tracking-widest font-mono mb-1">Your Position</p>
-          <p className="text-4xl font-display font-medium text-brand-neon">
-            #{position?.toLocaleString()}
-          </p>
-        </div>
-      </motion.div>
-    );
+    return <CelebrationState position={position!} boosts={referralBoosts} refCode={refCode} onShare={handleShare} />;
   }
 
+  // Fade fields sequentially
+  const formVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.06 }
+    }
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.25 } }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5 p-8 bg-brand-white/5 backdrop-blur-2xl border border-brand-border rounded-sm shadow-2xl relative" aria-live="polite">
+    <motion.form 
+      variants={formVariants}
+      initial="hidden"
+      animate={isOpen ? "show" : "hidden"}
+      onSubmit={handleSubmit} 
+      className="flex flex-col gap-5 p-4 sm:p-8 w-full max-w-md relative" 
+      aria-live="polite"
+    >
+      <motion.div variants={itemVariants} className="mb-2">
+        <h3 className="text-2xl font-display font-medium">Claim your seat</h3>
+        <p className="text-[10px] sm:text-xs text-brand-muted mt-1 font-mono uppercase tracking-widest">Cohort verification required.</p>
+      </motion.div>
+
       {status === 'error' && (
-        <div className="p-3 border border-red-500/50 bg-red-500/10 text-red-500 text-sm">
+        <motion.div variants={itemVariants} className="p-3 border border-red-500/50 bg-red-500/10 text-red-500 text-sm">
           {errorMsg}
-        </div>
+        </motion.div>
       )}
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="fullName" className="text-xs font-mono uppercase tracking-wider text-brand-muted">Full Name <span className="text-brand-neon">*</span></label>
+      <motion.div variants={itemVariants} className="flex flex-col gap-1.5">
+        <label htmlFor="fullName" className="text-[10px] font-mono uppercase tracking-wider text-brand-muted">Full Name <span className="text-brand-neon">*</span></label>
         <input 
           id="fullName" name="fullName" type="text" required minLength={2} maxLength={80}
           value={formData.fullName} onChange={handleChange}
           className="w-full bg-brand-black/40 border border-brand-border px-4 py-3 text-sm outline-none focus:border-brand-neon transition-colors"
         />
-      </div>
+      </motion.div>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="email" className="text-xs font-mono uppercase tracking-wider text-brand-muted">Work Email <span className="text-brand-neon">*</span></label>
+      <motion.div variants={itemVariants} className="flex flex-col gap-1.5">
+        <label htmlFor="email" className="text-[10px] font-mono uppercase tracking-wider text-brand-muted">Email <span className="text-brand-neon">*</span></label>
         <input 
           id="email" name="email" type="email" required pattern="^.+@.+\..+$"
           value={formData.email} onChange={handleChange}
           className="w-full bg-brand-black/40 border border-brand-border px-4 py-3 text-sm outline-none focus:border-brand-neon transition-colors"
         />
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="cohort" className="text-xs font-mono uppercase tracking-wider text-brand-muted">100x Cohort <span className="text-brand-neon">*</span></label>
+          <label htmlFor="cohort" className="text-[10px] font-mono uppercase tracking-wider text-brand-muted">Cohort <span className="text-brand-neon">*</span></label>
           <select 
             id="cohort" name="cohort" required
             value={formData.cohort} onChange={handleChange}
             className="w-full bg-brand-black/40 border border-brand-border px-4 py-3 text-sm outline-none focus:border-brand-neon appearance-none transition-colors"
           >
-            <option value="" disabled>Select cohort...</option>
+            <option value="" disabled>Select...</option>
             <option value="Cohort 1">Cohort 1</option>
             <option value="Cohort 2">Cohort 2</option>
             <option value="Cohort 3">Cohort 3</option>
@@ -127,61 +202,134 @@ export function WaitlistForm() {
             <option value="Cohort 5">Cohort 5</option>
             <option value="Cohort 6">Cohort 6</option>
             <option value="Cohort 7">Cohort 7</option>
-            <option value="Not yet in a cohort">Not yet in a cohort</option>
+            <option value="None">None</option>
           </select>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="role" className="text-xs font-mono uppercase tracking-wider text-brand-muted">Core Role <span className="text-brand-neon">*</span></label>
+          <label htmlFor="role" className="text-[10px] font-mono uppercase tracking-wider text-brand-muted">Role <span className="text-brand-neon">*</span></label>
           <select 
             id="role" name="role" required
             value={formData.role} onChange={handleChange}
             className="w-full bg-brand-black/40 border border-brand-border px-4 py-3 text-sm outline-none focus:border-brand-neon appearance-none transition-colors"
           >
-            <option value="" disabled>Select role...</option>
+            <option value="" disabled>Select...</option>
             <option value="Founder">Founder</option>
             <option value="Engineer">Engineer</option>
             <option value="Designer">Designer</option>
             <option value="PM">PM</option>
             <option value="Marketer">Marketer</option>
-            <option value="Operator">Operator</option>
-            <option value="Investor">Investor</option>
             <option value="Other">Other</option>
           </select>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="referral" className="text-xs font-mono uppercase tracking-wider text-brand-muted opacity-70">Referral Code (Optional)</label>
+      <motion.div variants={itemVariants} className="flex flex-col gap-1.5">
+        <label htmlFor="referral" className="text-[10px] font-mono uppercase tracking-wider text-brand-muted opacity-70">Referral Code</label>
         <input 
           id="referral" name="referral" type="text" maxLength={200}
-          value={formData.referral} onChange={handleChange} placeholder="Who referred you? Leave blank if none."
+          value={formData.referral} onChange={handleChange} placeholder="Optional"
           className="w-full bg-brand-black/40 border border-brand-border px-4 py-3 text-sm outline-none focus:border-brand-neon transition-colors placeholder:text-brand-muted/50"
         />
+      </motion.div>
+
+      <motion.div variants={itemVariants}>
+        <button
+          type="submit" disabled={status === 'loading'}
+          className="mt-4 w-full bg-brand-neon text-brand-black font-bold uppercase tracking-widest py-4 hover:bg-[#FF6A26] transition-all flex items-center justify-center gap-2 group border-none"
+        >
+          {status === 'loading' ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <>
+              Request Access
+              <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </>
+          )}
+        </button>
+      </motion.div>
+
+      <motion.div variants={itemVariants}>
+        <LiveCounter />
+      </motion.div>
+    </motion.form>
+  );
+}
+
+function CelebrationState({ position, boosts, refCode, onShare }: { position: number, boosts: number, refCode: string, onShare: () => void }) {
+  const [displayPos, setDisplayPos] = useState<number | string>('...');
+  const effectivePos = Math.max(1, position - boosts);
+
+  useEffect(() => {
+    let startTime = Date.now();
+    const scrambleDur = 800; // 800ms
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      if (elapsed < scrambleDur) {
+        setDisplayPos(Math.floor(Math.random() * 9999));
+      } else {
+        clearInterval(interval);
+        setDisplayPos(effectivePos);
+        import('canvas-confetti').then((mod) => {
+          mod.default({
+            particleCount: 80,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#FF4D00', '#4F46E5', '#FFFFFF'],
+            disableForReducedMotion: true
+          });
+        });
+      }
+    }, 50);
+    return () => clearInterval(interval);
+  }, [effectivePos]);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, delay: 0.2 }}
+      className="flex flex-col items-center justify-center text-center p-8 w-full max-w-md relative"
+    >
+      <div className="w-16 h-16 rounded-full bg-brand-neon/10 flex items-center justify-center mb-6">
+        <svg className="w-8 h-8 text-brand-neon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      
+      <p className="text-xs text-brand-muted uppercase tracking-widest font-mono mb-2">You are number</p>
+      
+      <div className="text-6xl md:text-8xl font-display font-medium text-brand-neon mb-2 tabular-nums">
+        #{displayPos}
       </div>
 
-      <button 
-        type="submit" 
-        disabled={status === 'loading'}
-        className="mt-4 w-full bg-brand-neon text-brand-black font-bold uppercase tracking-widest py-4 hover:bg-[#FF6A26] transition-all flex items-center justify-center gap-2 group"
-      >
-        {status === 'loading' ? (
-          <Loader2 className="w-5 h-5 animate-spin" />
-        ) : (
-          <>
-            Request Access
-            <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-            </svg>
-          </>
-        )}
-      </button>
+      {boosts > 0 && (
+         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm font-mono text-brand-neon/80 mb-6 border border-brand-neon/20 px-3 py-1 bg-brand-neon/5 inline-block">
+            +{boosts} from referrals
+         </motion.div>
+      )}
 
-      <div className="mt-4 flex items-center justify-center space-x-2">
-        <div className="h-[1px] w-4 bg-brand-white/20"></div>
-        <span className="text-[10px] text-brand-muted uppercase tracking-tighter">4,290 waiting list</span>
-        <div className="h-[1px] w-4 bg-brand-white/20"></div>
+      <p className="text-brand-muted text-lg mb-8 max-w-xs text-balance mt-4">
+        Position locked. Move up the list by referring other cohort members.
+      </p>
+
+      <div className="w-full p-4 border border-brand-border bg-brand-black/40 mb-6 flex flex-col gap-2">
+        <p className="text-[10px] text-brand-muted font-mono uppercase">Your Referral Code</p>
+        <div className="flex items-center justify-center gap-3">
+          <span className="font-mono text-xl tracking-wider">{refCode}</span>
+        </div>
       </div>
-    </form>
+      
+      <MagneticButton onClick={onShare} className="w-full text-sm hover:!bg-[#FF6A26]">
+        Share your seat
+      </MagneticButton>
+
+      <div className="flex items-center justify-center gap-6 mt-8 text-brand-muted hover:text-brand-white transition-colors">
+        <a href="https://x.com" target="_blank" className="text-[10px] font-mono uppercase tracking-widest">Follow on X</a>
+        <a href="https://linkedin.com" target="_blank" className="text-[10px] font-mono uppercase tracking-widest">LinkedIn</a>
+      </div>
+    </motion.div>
   );
 }

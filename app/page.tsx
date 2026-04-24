@@ -1,4 +1,7 @@
 import { Cursor } from '@/components/cursor';
+import { ShimmerEffect } from '@/components/shimmer-effect';
+import { EasterEggSound } from '@/components/easter-egg';
+import { WaitlistModal } from '@/components/waitlist-modal';
 import { Hero } from '@/components/hero';
 import { Problem } from '@/components/problem';
 import { Solution } from '@/components/solution';
@@ -12,6 +15,9 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-brand-black text-brand-white selection:bg-brand-neon selection:text-brand-black w-full overflow-x-hidden pt-safe">
       <Cursor />
+      <ShimmerEffect />
+      <EasterEggSound />
+      <WaitlistModal />
       <Hero />
       <SectionDivider />
       <Problem />
