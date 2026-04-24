@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-black: #000000;
+  --color-brand-neon: #FF4D00;
+  --color-brand-white: #FFFFFF;
+  --color-brand-muted: #9CA3AF;
+  --color-brand-border: rgba(255, 255, 255, 0.1);
+
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-outfit);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+body {
+  @apply bg-brand-black text-brand-white font-sans selection:bg-brand-neon selection:text-brand-black relative;
+  overscroll-behavior: none;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
