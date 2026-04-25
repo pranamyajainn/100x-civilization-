@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 import { useModalStore } from '@/lib/store';
 import { MagneticButton } from './magnetic-button';
 import { LiveCounter } from './live-counter';
+import confetti from 'canvas-confetti';
 
 // Short hash for referral code
 function shortHash(str: string) {
@@ -33,7 +34,8 @@ export function WaitlistForm() {
     email: '',
     cohort: '',
     role: '',
-    referral: ''
+    referral: '',
+    linkedin: ''
   });
 
   // Check LocalStorage on mount
@@ -43,10 +45,12 @@ export function WaitlistForm() {
       try {
         const data = JSON.parse(saved);
         if (data && data.position) {
-          setPosition(data.position);
-          setDocId(data.id);
-          setRefCode(data.refCode || shortHash(data.id || 'fallback'));
-          setStatus('success');
+          setTimeout(() => {
+            setPosition(data.position);
+            setDocId(data.id);
+            setRefCode(data.refCode || shortHash(data.id || 'fallback'));
+            setStatus('success');
+          }, 0);
         }
       } catch(e) {}
     }
@@ -85,17 +89,26 @@ export function WaitlistForm() {
         
         transaction.set(counterRef, { count: nextPos }, { merge: true });
         
-        transaction.set(doc(db, 'waitlist_signups', signupId), {
+        const signupData: any = {
           fullName: formData.fullName.trim(),
           email: formData.email.trim().toLowerCase(),
           cohort: formData.cohort,
           role: formData.role,
-          referral: formData.referral.trim() || null,
           createdAt: serverTimestamp(),
           position: nextPos,
           referralCode: refC,
           referralsCount: 0
-        });
+        };
+        
+        if (formData.referral.trim()) {
+           signupData.referral = formData.referral.trim();
+        }
+        
+        if (formData.linkedin.trim()) {
+           signupData.linkedin = formData.linkedin.trim();
+        }
+
+        transaction.set(doc(db, 'waitlist_signups', signupId), signupData);
         
         return nextPos;
       });
@@ -233,6 +246,15 @@ export function WaitlistForm() {
         />
       </motion.div>
 
+      <motion.div variants={itemVariants} className="flex flex-col gap-1.5">
+        <label htmlFor="linkedin" className="text-[10px] font-mono uppercase tracking-wider text-brand-muted opacity-70">LinkedIn Profile URL</label>
+        <input 
+          id="linkedin" name="linkedin" type="url" maxLength={200}
+          value={formData.linkedin} onChange={handleChange} placeholder="Optional"
+          className="w-full bg-brand-black/40 border border-brand-border px-4 py-3 text-sm outline-none focus:border-brand-neon transition-colors placeholder:text-brand-muted/50"
+        />
+      </motion.div>
+
       <motion.div variants={itemVariants}>
         <button
           type="submit" disabled={status === 'loading'}
@@ -272,14 +294,12 @@ function CelebrationState({ position, boosts, refCode, onShare }: { position: nu
       } else {
         clearInterval(interval);
         setDisplayPos(effectivePos);
-        import('canvas-confetti').then((mod) => {
-          mod.default({
-            particleCount: 80,
-            spread: 70,
-            origin: { y: 0.6 },
-            colors: ['#FF4D00', '#4F46E5', '#FFFFFF'],
-            disableForReducedMotion: true
-          });
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#FF4D00', '#4F46E5', '#FFFFFF'],
+          disableForReducedMotion: true
         });
       }
     }, 50);
@@ -325,11 +345,6 @@ function CelebrationState({ position, boosts, refCode, onShare }: { position: nu
       <MagneticButton onClick={onShare} className="w-full text-sm hover:!bg-[#FF6A26]">
         Share your seat
       </MagneticButton>
-
-      <div className="flex items-center justify-center gap-6 mt-8 text-brand-muted hover:text-brand-white transition-colors">
-        <a href="https://x.com" target="_blank" className="text-[10px] font-mono uppercase tracking-widest">Follow on X</a>
-        <a href="https://linkedin.com" target="_blank" className="text-[10px] font-mono uppercase tracking-widest">LinkedIn</a>
-      </div>
     </motion.div>
   );
 }

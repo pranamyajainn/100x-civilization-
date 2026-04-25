@@ -62,22 +62,22 @@ export function Hero() {
           </motion.div>
           
           {/* Headline */}
-          <h1 className="text-[56px] lg:text-[96px] leading-[0.95] tracking-tighter flex flex-col items-start text-left">
-            <span className="font-sans font-semibold text-transparent bg-clip-text relative inline-block overflow-hidden">
+          <h1 className="text-[48px] sm:text-[56px] lg:text-[84px] leading-[0.95] tracking-tighter flex flex-col items-start text-left">
+            <span className="font-sans font-semibold relative inline-block overflow-hidden pb-1">
                <motion.span 
                  initial={{ y: "100%", opacity: 0 }}
                  animate={{ y: 0, opacity: 1 }}
                  transition={prefersReducedMotion ? { duration: 0.7, delay: 0.2 } : { duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                 className="inline-block"
+                 className="inline-block text-brand-white"
                >
-                 The 
+                 The
                </motion.span>
                {' '}
                <motion.span 
                  initial={{ y: "100%", opacity: 0 }}
                  animate={prefersReducedMotion ? { y: 0, opacity: 1 } : { y: 0, opacity: 1, backgroundPosition: ['0% center', '200% center'] }}
                  transition={prefersReducedMotion ? { duration: 0.7, delay: 0.28 } : { duration: 0.7, delay: 0.28, ease: [0.22, 1, 0.36, 1], backgroundPosition: { repeat: Infinity, duration: 6, ease: "linear" } }}
-                 className="inline-block"
+                 className="inline-block text-transparent bg-clip-text"
                  style={{ 
                    backgroundImage: 'linear-gradient(to right, #FF4D00 0%, #FFB37A 50%, #FFFFFF 100%)',
                    WebkitBackgroundClip: 'text',
@@ -87,12 +87,12 @@ export function Hero() {
                  100x
                </motion.span>
             </span>
-            <span className="overflow-hidden mt-2">
+            <span className="overflow-hidden mt-1">
               <motion.span 
                 initial={{ y: "100%", opacity: 0, filter: 'blur(8px)' }}
                 animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
                 transition={{ duration: 0.8, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                className="inline-block font-[family-name:var(--font-cormorant)] italic font-medium text-[72px] lg:text-[120px] text-brand-white"
+                className="inline-block font-[family-name:var(--font-cormorant)] italic font-medium text-[64px] sm:text-[72px] lg:text-[104px] text-brand-white"
               >
                 Civilization
               </motion.span>

@@ -8,16 +8,16 @@ service cloud.firestore {
 
     match /metadata/{docId} {
       allow read: if true;
-      allow update: if true;
-      allow create: if true;
+      allow update: if request.resource.data.keys().hasOnly(['count']) && request.resource.data.count is number;
+      allow create: if false;
     }
     
     // Waitlist Signups (Create Only)
     match /waitlist_signups/{signupId} {
-      allow read: if true;
+      allow read: if false; // BLOCK PII LEAKS
       allow update, delete: if false;
       allow create: if 
-        request.resource.data.keys().hasAll(['fullName', 'email', 'cohort', 'role', 'createdAt']) &&
+        request.resource.data.keys().hasAny(['fullName', 'email', 'cohort', 'role', 'createdAt']) &&
         request.resource.data.fullName is string && request.resource.data.fullName.size() >= 2 && request.resource.data.fullName.size() <= 80 &&
         request.resource.data.email is string && request.resource.data.email.matches('^.+@.+\\.[a-zA-Z]+$') && request.resource.data.email.size() <= 100 &&
         request.resource.data.cohort is string &&
@@ -25,6 +25,18 @@ service cloud.firestore {
         (
           !('referral' in request.resource.data) || 
           (request.resource.data.referral is string && request.resource.data.referral.size() <= 200)
+        ) &&
+        (
+          !('linkedin' in request.resource.data) || 
+          (request.resource.data.linkedin is string && request.resource.data.linkedin.size() <= 200)
+        ) &&
+        (
+          !('position' in request.resource.data) || 
+          (request.resource.data.position is number)
+        ) &&
+        (
+          !('referralCode' in request.resource.data) || 
+          (request.resource.data.referralCode is string)
         ) &&
         request.resource.data.createdAt == request.time;
     }

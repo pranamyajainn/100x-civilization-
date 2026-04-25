@@ -18,9 +18,11 @@ export function LiveCounter() {
     let initialCount = 0;
     if (cached) {
       initialCount = parseInt(cached, 10);
-      setDisplayCount(initialCount);
       lastCount.current = initialCount;
-      setIsLoaded(true); // show cached value immediately
+      setTimeout(() => {
+        setDisplayCount(initialCount);
+        setIsLoaded(true); // show cached value immediately
+      }, 0);
     }
 
     const unsub = onSnapshot(doc(db, 'metadata', 'signups'), (snap) => {

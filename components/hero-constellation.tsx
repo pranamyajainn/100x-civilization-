@@ -76,6 +76,9 @@ export function HeroConstellation() {
             <feGaussianBlur stdDeviation="24" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
+          <filter id="center-blur" x="-200%" y="-200%" width="500%" height="500%">
+            <feGaussianBlur stdDeviation="32" />
+          </filter>
         </defs>
 
         {/* Links to center */}
@@ -118,15 +121,79 @@ export function HeroConstellation() {
           );
         })}
 
+        {/* Responsive styles for center node */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            .center-radius { r: 52.5px; }
+            .center-text-size { font-size: 20.6px; }
+            @media (min-width: 1024px) {
+              .center-radius { r: 36px; }
+              .center-text-size { font-size: 13px; }
+            }
+          `
+        }} />
+
         {/* Center node */}
-        <motion.circle 
-           cx={center.x} cy={center.y} r="14" fill="white" filter="url(#glow-center)" 
-           initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} transition={{ delay: 1.0, duration: 1 }} 
-        />
-        <motion.circle 
-           cx={center.x} cy={center.y} r="14" fill="white" 
-           initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 1.0, type: "spring" }} 
-        />
+        <motion.g 
+          initial={{ scale: 0 }} 
+          animate={{ scale: 1 }} 
+          transition={{ delay: 1.0, type: "spring", stiffness: 200, damping: 15 }}
+          style={{ transformOrigin: `${center.x}px ${center.y}px` }}
+        >
+          {/* Idle pulse group (only scales disc, not text) */}
+          <motion.g
+            animate={prefersReducedMotion ? {} : { scale: [1, 1.03, 1] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            style={{ transformOrigin: `${center.x}px ${center.y}px` }}
+          >
+            {/* Glow (Idle) */}
+            <motion.circle 
+               cx={center.x} cy={center.y} 
+               className="center-radius" 
+               fill="white" 
+               filter="url(#center-blur)" 
+               animate={prefersReducedMotion ? { opacity: 0.7 } : { opacity: [0.7, 0.9, 0.7] }} 
+               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            />
+            {/* Glow (Flash sync with loop) */}
+            {!prefersReducedMotion && (
+              <motion.circle 
+                 cx={center.x} cy={center.y} 
+                 className="center-radius" 
+                 fill="white" 
+                 filter="url(#center-blur)" 
+                 initial={{ opacity: 0 }}
+                 animate={{ opacity: [0, 0, 1, 0, 0] }}
+                 transition={{ duration: 6, repeat: Infinity, times: [0, 0.966, 0.983, 1, 1] }}
+              />
+            )}
+            
+            {/* Base White Disc */}
+            <circle 
+               cx={center.x} cy={center.y} 
+               className="center-radius" 
+               fill="white" 
+               stroke="rgba(255,255,255,0.4)" 
+               strokeWidth="1" 
+            />
+          </motion.g>
+
+          {/* Text mark - fades in at 2200ms, not affected by idle scale */}
+          <motion.text
+            x={center.x} y={center.y}
+            textAnchor="middle"
+            dominantBaseline="central"
+            textRendering="geometricPrecision"
+            className="font-sans font-bold center-text-size"
+            fill="#050409"
+            style={{ letterSpacing: "-0.02em", transformOrigin: `${center.x}px ${center.y}px` }}
+            initial={prefersReducedMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 2.2, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          >
+            100x
+          </motion.text>
+        </motion.g>
 
         {/* Nodes and Labels */}
         {nodes.map((node, i) => {

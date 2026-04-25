@@ -5,7 +5,7 @@ import { motion, useMotionValue } from 'motion/react';
 
 const team = [
   {
-    name: "Pranamya",
+    name: "Pranamya Jain",
     role: "AI Solutions Architect",
     desc: "Full-stack AI builder, agentic workflows, RAG, multi-LLM orchestration. Bringing the closed-loop economic playbook to 100x.",
     tag: "Mini Hackathon Winner"
@@ -42,7 +42,7 @@ export function Team() {
       size: 1 + Math.random() * 2,
       delay: -Math.random() * 20
     }));
-    setParticles(p);
+    setTimeout(() => setParticles(p), 0);
   }, []);
 
   return (
