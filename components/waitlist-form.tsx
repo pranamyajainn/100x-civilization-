@@ -232,6 +232,7 @@ export function WaitlistForm() {
             <option value="Designer">Designer</option>
             <option value="PM">PM</option>
             <option value="Marketer">Marketer</option>
+            <option value="Student">Student</option>
             <option value="Other">Other</option>
           </select>
         </div>
