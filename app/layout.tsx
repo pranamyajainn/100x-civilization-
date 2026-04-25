@@ -3,10 +3,10 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Outfit, JetBrains_Mono, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: 'swap' });
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: 'swap' });
-const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains-mono", display: 'swap' });
-const cormorant = Cormorant_Garamond({ weight: ["400", "600", "700"], style: ["normal", "italic"], subsets: ["latin"], variable: "--font-cormorant", display: 'swap' });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: 'swap', adjustFontFallback: true, preload: true });
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: 'swap', adjustFontFallback: true, preload: false });
+const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains-mono", display: 'swap', adjustFontFallback: true, preload: false });
+const cormorant = Cormorant_Garamond({ weight: ["400", "600", "700"], style: ["normal", "italic"], subsets: ["latin"], variable: "--font-cormorant", display: 'swap', adjustFontFallback: true, preload: true });
 
 export const metadata: Metadata = {
   title: "The 100x Civilization. Members-only economic engine for 100x cohorts.",

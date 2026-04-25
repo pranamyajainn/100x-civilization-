@@ -1,7 +1,8 @@
 'use client';
 import { useModalStore } from '@/lib/store';
 import { HeroAurora } from './hero-aurora';
-import { HeroConstellation } from './hero-constellation';
+import dynamic from 'next/dynamic';
+const HeroConstellation = dynamic(() => import('./hero-constellation').then(mod => mod.HeroConstellation), { ssr: false });
 import { MagneticButton } from './magnetic-button';
 import { motion, useScroll, useTransform, useReducedMotion } from 'motion/react';
 import { useRef } from 'react';

@@ -22,6 +22,33 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        source: '/_next/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          }
+        ]
+      },
+      {
+        source: '/fonts/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          }
+        ]
+      },
+      {
+        source: '/',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate'
+          }
+        ]
+      },
+      {
         source: '/(.*)',
         headers: [
           {
@@ -70,4 +97,8 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+import withBundleAnalyzer from '@next/bundle-analyzer';
+
+export default withBundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+})(nextConfig);

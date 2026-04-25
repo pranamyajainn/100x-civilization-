@@ -1,15 +1,15 @@
 import { Cursor } from '@/components/cursor';
 import { ShimmerEffect } from '@/components/shimmer-effect';
 import { EasterEggSound } from '@/components/easter-egg';
-import { WaitlistModal } from '@/components/waitlist-modal';
 import { Hero } from '@/components/hero';
+import { SectionDivider } from '@/components/section-divider';
+import { WaitlistModal } from '@/components/waitlist-modal';
 import { Problem } from '@/components/problem';
 import { Solution } from '@/components/solution';
 import { Vision } from '@/components/vision';
 import { Team } from '@/components/team';
 import { FinalCTA } from '@/components/cta';
 import { Footer } from '@/components/footer';
-import { SectionDivider } from '@/components/section-divider';
 
 export default function Home() {
   return (
