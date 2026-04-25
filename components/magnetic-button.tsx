@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { motion, useMotionValue, useSpring } from 'motion/react';
 
-export function MagneticButton({ children, className, onClick }: { children: React.ReactNode, className?: string, onClick?: () => void }) {
+export function MagneticButton({ children, className, variant = 'primary', onClick }: { children: React.ReactNode, className?: string, variant?: 'primary' | 'custom', onClick?: () => void }) {
   const ref = useRef<HTMLButtonElement>(null);
   const [prefersReduced, setPrefersReduced] = useState(true);
   
@@ -43,7 +43,7 @@ export function MagneticButton({ children, className, onClick }: { children: Rea
       onMouseLeave={handleMouseLeave}
       onClick={onClick}
       style={{ x: xSpring, y: ySpring }}
-      className={`relative inline-flex items-center justify-center text-brand-black bg-brand-neon font-semibold transition-colors hover:bg-[#FF6A26] min-h-[56px] px-8 tracking-wide ${className || ''}`}
+      className={variant === 'primary' ? `relative inline-flex items-center justify-center text-brand-black bg-brand-neon font-semibold transition-colors hover:bg-[#FF6A26] min-h-[56px] px-8 tracking-wide ${className || ''}` : className}
     >
       {children}
     </motion.button>

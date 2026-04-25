@@ -31,7 +31,7 @@ const team = [
 ];
 
 export function Team() {
-  const [particles, setParticles] = useState<{x: number, y: number, speed: number, size: number}[]>([]);
+  const [particles, setParticles] = useState<{x: number, y: number, speed: number, size: number, delay: number}[]>([]);
 
   useEffect(() => {
     // Generate static particles array on mount to avoid hydration mismatch
@@ -39,7 +39,8 @@ export function Team() {
       x: Math.random() * 100,
       y: Math.random() * 100,
       speed: 0.1 + Math.random() * 0.3,
-      size: 1 + Math.random() * 2
+      size: 1 + Math.random() * 2,
+      delay: -Math.random() * 20
     }));
     setParticles(p);
   }, []);
@@ -59,7 +60,7 @@ export function Team() {
                  height: p.size,
                }}
                animate={{ y: ['0%', '-20%'], opacity: [0, 0.8, 0] }}
-               transition={{ duration: 10 / p.speed, repeat: Infinity, ease: 'linear', delay: -Math.random() * 20 }}
+               transition={{ duration: 10 / p.speed, repeat: Infinity, ease: 'linear', delay: p.delay }}
              />
            ))}
          </div>

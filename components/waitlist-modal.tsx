@@ -4,6 +4,7 @@ import { useModalStore } from '@/lib/store';
 import { WaitlistForm } from './waitlist-form';
 import { useEffect } from 'react';
 import { MagneticButton } from './magnetic-button';
+import { X } from 'lucide-react';
 
 export function WaitlistModal() {
   const { isOpen, closeModal } = useModalStore();
@@ -58,10 +59,8 @@ export function WaitlistModal() {
             className="relative w-full max-w-2xl px-4 z-20 flex justify-center"
           >
             <div className="absolute top-4 right-4 sm:top-8 sm:right-8 z-30">
-              <MagneticButton onClick={closeModal} className="w-12 h-12 rounded-full flex items-center justify-center bg-transparent border border-brand-border hover:bg-brand-white/5 p-0">
-                <svg className="w-5 h-5 text-brand-muted hover:text-brand-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <MagneticButton variant="custom" onClick={closeModal} className="w-12 h-12 rounded-full flex items-center justify-center bg-transparent border border-brand-border hover:bg-brand-white/5 p-0 group">
+                <X className="w-6 h-6 text-brand-muted group-hover:text-brand-white transition-colors" />
               </MagneticButton>
             </div>
             <WaitlistForm />

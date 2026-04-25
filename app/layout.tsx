@@ -1,11 +1,12 @@
 import { LenisProvider } from '@/components/lenis-provider';
 import type { Metadata, Viewport } from "next";
-import { Inter, Outfit, JetBrains_Mono } from "next/font/google";
+import { Inter, Outfit, JetBrains_Mono, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: 'swap' });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: 'swap' });
 const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains-mono", display: 'swap' });
+const cormorant = Cormorant_Garamond({ weight: ["400", "600", "700"], style: ["normal", "italic"], subsets: ["latin"], variable: "--font-cormorant", display: 'swap' });
 
 export const metadata: Metadata = {
   title: "The 100x Civilization. Members-only economic engine for 100x cohorts.",
@@ -29,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${outfit.variable} ${jetbrains.variable} dark`}>
+    <html lang="en" className={`${inter.variable} ${outfit.variable} ${jetbrains.variable} ${cormorant.variable} dark`}>
       <body className="bg-brand-black text-brand-white antialiased selection:bg-brand-neon selection:text-brand-black">
         <LenisProvider>
           {children}

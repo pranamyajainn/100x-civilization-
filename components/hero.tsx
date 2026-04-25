@@ -1,100 +1,154 @@
 'use client';
-import { HeroMesh } from './hero-mesh';
-import { motion } from 'motion/react';
-import { useEffect, useState } from 'react';
-import { ScrambleText } from './scramble';
-import { MagneticButton } from './magnetic-button';
 import { useModalStore } from '@/lib/store';
-import dynamic from 'next/dynamic';
+import { HeroAurora } from './hero-aurora';
+import { HeroConstellation } from './hero-constellation';
+import { MagneticButton } from './magnetic-button';
+import { motion, useScroll, useTransform, useReducedMotion } from 'motion/react';
+import { useRef } from 'react';
 
-const Hero3D = dynamic(() => import('./hero-3d'), { ssr: false, loading: () => <div className="w-full h-full min-h-[400px]" /> });
+/**
+ * DIAGNOSIS ANSWERS:
+ * 1. The current font for "Civilization" italic is Cormorant Garamond (--font-cormorant).
+ * 2. The exact hex of the orange used in the eyebrow and Request Access button is #FF4D00 (mapped to brand-neon).
+ * 3. The grid spacing in Solution is 40px x 40px, and opacity is 0.06 (rgba(255, 255, 255, 0.06)).
+ * 4. The orange accent dot motif (found in cursor) is a ring (border-brand-neon) with a w-1 h-1 solid center dot (bg-brand-neon).
+ * 5. prefers-reduced-motion is currently honored across the site (e.g. in count-up, cursor, team components).
+ */
 
 export function Hero() {
-  const headline = "The 100x Civilization".split(" ");
-  const [isMounted, setIsMounted] = useState(false);
   const { openModal } = useModalStore();
+  const prefersReducedMotion = useReducedMotion();
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"]
+  });
 
-  useEffect(() => {
-    let timeoutId = setTimeout(() => setIsMounted(true), 0);
-    return () => clearTimeout(timeoutId);
-  }, []);
+  // Handoff to problem section:
+  // As scroll passes 50% of hero height, the constellation scales 1 -> 0.85 and translates Y by 80px.
+  // At 80% scroll-out, opacity drops 1 -> 0.4.
+  const constellationScale = useTransform(scrollYProgress, [0, 0.5, 1], [1, 1, 0.85]);
+  const constellationY = useTransform(scrollYProgress, [0, 0.5, 1], [0, 0, 80]);
+  const constellationOpacity = useTransform(scrollYProgress, [0, 0.8, 1], [1, 1, 0.4]);
 
   return (
-    <section className="relative min-h-[90vh] flex items-center pt-32 pb-16 overflow-hidden">
-      <HeroMesh />
+    <section ref={heroRef} className="relative min-h-[100dvh] flex items-center pt-24 pb-16 overflow-hidden bg-brand-black">
+      {/* Background layer */}
+      <HeroAurora />
       
-      <div className="max-w-7xl mx-auto px-6 md:px-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 relative z-10">
-        <div className="flex flex-col justify-center items-start">
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-6 md:px-12 w-full flex flex-col lg:flex-row relative z-10">
+        
+        {/* Left Column: Typography & CTA */}
+        <div className="w-full lg:w-[55%] flex flex-col justify-center pointer-events-auto mt-12 lg:mt-0">
+          
+          {/* Eyebrow */}
           <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            transition={{ delay: 0.1 }}
-            className="inline-flex items-center gap-2 px-3 py-1 bg-brand-neon/10 border border-brand-neon/40 text-[10px] font-mono tracking-widest uppercase text-brand-neon mb-6 md:mb-8 w-fit backdrop-blur-sm"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-neon animate-pulse" />
-            A community project
-          </motion.div>
-          
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-display font-medium tracking-tight mb-6 md:mb-8 leading-[1.1] md:leading-[1.05]">
-            {isMounted ? headline.map((word, i) => (
-              <motion.span
-                key={i}
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
-                className="inline-block mr-2 sm:mr-3 md:mr-4 last:mr-0"
-                style={{
-                  background: word === '100x' ? 'linear-gradient(to right, #FF4D00, #FFFFFF)' : 'none',
-                  WebkitBackgroundClip: word === '100x' ? 'text' : 'none',
-                  WebkitTextFillColor: word === '100x' ? 'transparent' : 'initial',
-                }}
-              >
-                {word}
-              </motion.span>
-            )) : <span className="opacity-0">The 100x Civilization</span>}
-          </h1>
-          
-          <motion.p 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="text-base sm:text-lg md:text-xl text-brand-muted leading-relaxed font-sans max-w-lg mb-8 md:mb-10 text-balance"
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="flex items-center gap-3 mb-6"
           >
-            Members-only exclusive economic engine for all cohorts. Trust becomes transactions. Transactions become wealth. Wealth compounds inside instead of leaking out.
+            <motion.div 
+              initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring" }}
+              className="relative w-3 h-3 flex items-center justify-center"
+            >
+              <div className="absolute inset-0 rounded-full border border-brand-neon" />
+              <div className="w-1 h-1 bg-brand-neon rounded-full" />
+            </motion.div>
+            <span className="text-[11px] font-mono tracking-[0.2em] text-brand-neon uppercase">
+              A community project
+            </span>
+          </motion.div>
+          
+          {/* Headline */}
+          <h1 className="text-[56px] lg:text-[96px] leading-[0.95] tracking-tighter flex flex-col items-start text-left">
+            <span className="font-sans font-semibold text-transparent bg-clip-text relative inline-block overflow-hidden">
+               <motion.span 
+                 initial={{ y: "100%", opacity: 0 }}
+                 animate={{ y: 0, opacity: 1 }}
+                 transition={prefersReducedMotion ? { duration: 0.7, delay: 0.2 } : { duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                 className="inline-block"
+               >
+                 The 
+               </motion.span>
+               {' '}
+               <motion.span 
+                 initial={{ y: "100%", opacity: 0 }}
+                 animate={prefersReducedMotion ? { y: 0, opacity: 1 } : { y: 0, opacity: 1, backgroundPosition: ['0% center', '200% center'] }}
+                 transition={prefersReducedMotion ? { duration: 0.7, delay: 0.28 } : { duration: 0.7, delay: 0.28, ease: [0.22, 1, 0.36, 1], backgroundPosition: { repeat: Infinity, duration: 6, ease: "linear" } }}
+                 className="inline-block"
+                 style={{ 
+                   backgroundImage: 'linear-gradient(to right, #FF4D00 0%, #FFB37A 50%, #FFFFFF 100%)',
+                   WebkitBackgroundClip: 'text',
+                   backgroundSize: '200% auto'
+                 }}
+               >
+                 100x
+               </motion.span>
+            </span>
+            <span className="overflow-hidden mt-2">
+              <motion.span 
+                initial={{ y: "100%", opacity: 0, filter: 'blur(8px)' }}
+                animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
+                transition={{ duration: 0.8, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                className="inline-block font-[family-name:var(--font-cormorant)] italic font-medium text-[72px] lg:text-[120px] text-brand-white"
+              >
+                Civilization
+              </motion.span>
+            </span>
+          </h1>
+          
+          {/* Sub-copy */}
+          <motion.p 
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 1.1 }}
+            className="mt-6 text-[18px] text-brand-white/60 leading-[1.6] font-sans max-w-[480px]"
+          >
+            A members-only economic engine for 100x cohorts. Trust compounds. Wealth stays inside.
           </motion.p>
           
+          {/* CTA Group */}
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="mb-8"
+            initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 1.4 }}
+            className="mt-10 flex flex-col sm:flex-row items-start gap-4"
           >
-            <MagneticButton onClick={openModal}>
-              Request access
+            <MagneticButton 
+              variant="custom"
+              onClick={openModal}
+              className="bg-brand-neon text-brand-black font-semibold px-[36px] py-[18px] rounded-none hover:bg-[#FF6A26] transition-colors border-none"
+            >
+              Request Access
             </MagneticButton>
+            <button 
+              onClick={openModal}
+              className="bg-transparent text-brand-white font-semibold px-[36px] py-[18px] rounded-none border border-brand-white/20 hover:bg-brand-white/5 transition-colors"
+            >
+              Learn more
+            </button>
           </motion.div>
-
+          
+          {/* Stats Line */}
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="flex items-center gap-4 text-xs sm:text-sm font-mono text-brand-muted"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 1.7 }}
+            className="mt-6"
           >
-            <span className="flex h-px w-8 bg-brand-border hidden sm:block" />
-            <ScrambleText text="Invite-only. Cohort verification required." duration={1500} />
+            <span className="font-mono text-[11px] text-brand-white/40 tracking-wider">
+              7 COHORTS · 500+ BUILDERS · INVITE ONLY
+            </span>
           </motion.div>
+          
         </div>
         
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          className="flex items-center justify-center w-full lg:justify-end"
-        >
-          <div className="w-full max-w-md h-full min-h-[400px]">
-            <Hero3D />
-          </div>
-        </motion.div>
+        {/* Right Column: Constellation placeholder */}
+        <div className="w-full lg:w-[45%] mt-12 lg:mt-0 flex items-center justify-center pointer-events-auto">
+           <motion.div 
+             className="w-[320px] lg:w-[600px] h-[320px] lg:h-[600px] flex items-center justify-center"
+             style={{ scale: constellationScale, y: constellationY, opacity: constellationOpacity }}
+           >
+             <HeroConstellation />
+           </motion.div>
+        </div>
+
       </div>
     </section>
   );
