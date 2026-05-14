@@ -1,0 +1,230 @@
+{
+  "/Users/pranamyajain/100x-civilization-/middleware.ts": {
+    "mtime": 1778241049.6179059,
+    "hash": "5d783dfe9f53295299f94c3e72b0ba03"
+  },
+  "/Users/pranamyajain/100x-civilization-/postcss.config.mjs": {
+    "mtime": 1777122605.607125,
+    "hash": "b2f5d23a090943dc40e19a92862cc2c1"
+  },
+  "/Users/pranamyajain/100x-civilization-/next-env.d.ts": {
+    "mtime": 1777122605.6050854,
+    "hash": "ba64ff7d54714a8f64db89b1003207d8"
+  },
+  "/Users/pranamyajain/100x-civilization-/eslint.config.mjs": {
+    "mtime": 1777122605.6041842,
+    "hash": "514279e2189c54adb2442e384cc25404"
+  },
+  "/Users/pranamyajain/100x-civilization-/next.config.ts": {
+    "mtime": 1778244461.834217,
+    "hash": "cb954861f9432dd235b269558568485b"
+  },
+  "/Users/pranamyajain/100x-civilization-/app/layout.tsx": {
+    "mtime": 1778241448.1671154,
+    "hash": "40aa840f08dd75ac2b82d77b0f22a2d7"
+  },
+  "/Users/pranamyajain/100x-civilization-/app/page.tsx": {
+    "mtime": 1777124961.0912402,
+    "hash": "ee12338f8a71344664d1488698ae9429"
+  },
+  "/Users/pranamyajain/100x-civilization-/app/app/layout.tsx": {
+    "mtime": 1778236826.2313664,
+    "hash": "4a3408b026878cedba5f13c20968d645"
+  },
+  "/Users/pranamyajain/100x-civilization-/app/app/posts/[id]/page.tsx": {
+    "mtime": 1778244579.961914,
+    "hash": "97a3a2ead92616c231f1fcc86764e6ce"
+  },
+  "/Users/pranamyajain/100x-civilization-/app/app/admin/page.tsx": {
+    "mtime": 1778241343.8821654,
+    "hash": "b4a203d55768e2dfd7d28dff01091a82"
+  },
+  "/Users/pranamyajain/100x-civilization-/app/app/profile/page.tsx": {
+    "mtime": 1778241516.8284762,
+    "hash": "2447abb566540e2b72fe672fe61006bd"
+  },
+  "/Users/pranamyajain/100x-civilization-/app/app/feed/page.tsx": {
+    "mtime": 1778244524.7034147,
+    "hash": "e5883b87a6cc100a3621995f66193a75"
+  },
+  "/Users/pranamyajain/100x-civilization-/app/app/onboarding/page.tsx": {
+    "mtime": 1778244615.8006766,
+    "hash": "aa9c9cbc3a2a734385ee638f7d459a00"
+  },
+  "/Users/pranamyajain/100x-civilization-/app/invite/page.tsx": {
+    "mtime": 1778241410.1812737,
+    "hash": "c0f0c58cdccac21212d4587a4d9a8544"
+  },
+  "/Users/pranamyajain/100x-civilization-/app/invite/[token]/page.tsx": {
+    "mtime": 1778236869.4641204,
+    "hash": "8bc6e0f4eb80b9425c6a689509ee0068"
+  },
+  "/Users/pranamyajain/100x-civilization-/app/api/notify/route.ts": {
+    "mtime": 1778241535.0747228,
+    "hash": "a70de3163e47753aec85bb77b8a91266"
+  },
+  "/Users/pranamyajain/100x-civilization-/app/api/embed/route.ts": {
+    "mtime": 1778236620.8388157,
+    "hash": "124f56abe6ecb015e471f0dd82d00a96"
+  },
+  "/Users/pranamyajain/100x-civilization-/app/api/admin/invite/route.ts": {
+    "mtime": 1778236658.534587,
+    "hash": "2d3d7d590ee0e06a5b1cc3d4faee6439"
+  },
+  "/Users/pranamyajain/100x-civilization-/app/api/unsubscribe/route.ts": {
+    "mtime": 1778236660.5714083,
+    "hash": "cb7eaf8d9a6a3618980fb6d2696c5143"
+  },
+  "/Users/pranamyajain/100x-civilization-/app/api/connect/route.ts": {
+    "mtime": 1778241112.6807446,
+    "hash": "58fb8dab878b9b101dd2d11f12d70c18"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/post-form.tsx": {
+    "mtime": 1778244627.7570636,
+    "hash": "8661b2b0124a1378022f5e0a88bea871"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/skill-tag-input.tsx": {
+    "mtime": 1778244564.4097016,
+    "hash": "cbf62b7c9bfd3f0a1f67bafa752f160b"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/hero.tsx": {
+    "mtime": 1778241380.8214192,
+    "hash": "5c56348f01a2086a309ee73aad798b4a"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/vision.tsx": {
+    "mtime": 1777122605.6036532,
+    "hash": "dfa96e00c14652913a41e728e1d18cb9"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/cursor.tsx": {
+    "mtime": 1777122605.6015668,
+    "hash": "ff162df44541620a7bc126cf2ca06e8f"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/team.tsx": {
+    "mtime": 1777122605.603458,
+    "hash": "efae9da9338ab83b436c6e2d73be7ea4"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/easter-egg.tsx": {
+    "mtime": 1777122605.601671,
+    "hash": "6cc3a4ad4f30444d4d6d62c5b9a87d53"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/waitlist-form.tsx": {
+    "mtime": 1777190178.6452837,
+    "hash": "8db8c1c73f00402a45ad53d747ebdc7f"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/waitlist-modal.tsx": {
+    "mtime": 1777190178.6458178,
+    "hash": "58ca64dfe8334146454256c01f9a320c"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/magnetic-button.tsx": {
+    "mtime": 1777122605.602647,
+    "hash": "a9d30f9991f705893e7d70f9b319c75d"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/scroll-reveal.tsx": {
+    "mtime": 1777122605.6029518,
+    "hash": "c57195bdc8029222dc75725479e35f98"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/footer.tsx": {
+    "mtime": 1777122605.6017735,
+    "hash": "727453f780a052440e7ebe83c0acc806"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/hero-constellation.tsx": {
+    "mtime": 1777122605.6021247,
+    "hash": "f17ba3c8053f2705953a8834532012f5"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/shimmer-effect.tsx": {
+    "mtime": 1777122605.603146,
+    "hash": "29ec956e6b5dc1e137ac911c2efb3dc8"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/hero-aurora.tsx": {
+    "mtime": 1777122605.601886,
+    "hash": "5d115fbc9e7707dbe91e50bffdd1e1fb"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/cta.tsx": {
+    "mtime": 1777122605.6014645,
+    "hash": "379799cae746e12cbdefc5c076d7361f"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/scramble.tsx": {
+    "mtime": 1777122605.602851,
+    "hash": "3fe35b3d1fc7218984ad8fd051e3e525"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/solution.tsx": {
+    "mtime": 1777122605.6032526,
+    "hash": "30eb73da93c1603ae8c1fdc98574d9c5"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/lenis-provider.tsx": {
+    "mtime": 1777124738.0694761,
+    "hash": "67a2fe713c0618405b7d41ccde083da0"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/count-up.tsx": {
+    "mtime": 1777122605.6013567,
+    "hash": "ae84373591fae1b36fe5a4f1c3730fa1"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/live-counter.tsx": {
+    "mtime": 1777122605.6025488,
+    "hash": "cb9b080c21ac845a366cfdcadaf82ba1"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/post-card.tsx": {
+    "mtime": 1778236744.8324947,
+    "hash": "d649b660a7a2df92f113fa276281515a"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/section-divider.tsx": {
+    "mtime": 1777122605.603043,
+    "hash": "91d09ee3d0f2420f8daab078850056c3"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/problem.tsx": {
+    "mtime": 1777122605.602755,
+    "hash": "8b7dd60e5e9409120e513fb62f0b9326"
+  },
+  "/Users/pranamyajain/100x-civilization-/components/tilt-card.tsx": {
+    "mtime": 1777122605.6035583,
+    "hash": "6355e387732ea305139b3923cfd5b1eb"
+  },
+  "/Users/pranamyajain/100x-civilization-/hooks/use-auth.ts": {
+    "mtime": 1778236694.2306132,
+    "hash": "8c09b11d85b1823cbb3367fdfddd2a99"
+  },
+  "/Users/pranamyajain/100x-civilization-/hooks/use-mobile.ts": {
+    "mtime": 1777122605.604534,
+    "hash": "471e5df452f494a733a3e2ac1a0d66c4"
+  },
+  "/Users/pranamyajain/100x-civilization-/scripts/seed.ts": {
+    "mtime": 1778241223.6138139,
+    "hash": "8f894c81a492172ab243e77ab4ffd12c"
+  },
+  "/Users/pranamyajain/100x-civilization-/scripts/seed-cleanup.ts": {
+    "mtime": 1778241247.9415827,
+    "hash": "6e96c6269b09097e07f9dcf2a9884e5c"
+  },
+  "/Users/pranamyajain/100x-civilization-/lib/firebase.ts": {
+    "mtime": 1778236530.072653,
+    "hash": "bc46a925326497abcb610466b4258810"
+  },
+  "/Users/pranamyajain/100x-civilization-/lib/email.ts": {
+    "mtime": 1778236585.7054803,
+    "hash": "a2dd778aa0f031ed98bf35e3a9c76631"
+  },
+  "/Users/pranamyajain/100x-civilization-/lib/taxonomy.ts": {
+    "mtime": 1778236518.0437434,
+    "hash": "7d2dca3ad5091c795464ef3b5268f5ed"
+  },
+  "/Users/pranamyajain/100x-civilization-/lib/utils.ts": {
+    "mtime": 1777122605.6048815,
+    "hash": "5a6fd53fdcf2be529e9cc0b718fde352"
+  },
+  "/Users/pranamyajain/100x-civilization-/lib/matching.ts": {
+    "mtime": 1778241545.7502785,
+    "hash": "eef623676a117971761600ab75e82e5c"
+  },
+  "/Users/pranamyajain/100x-civilization-/lib/store.ts": {
+    "mtime": 1777122605.6047785,
+    "hash": "8c261a7b504207d6747001ae62f322e9"
+  },
+  "/Users/pranamyajain/100x-civilization-/100x_civilization_prd.md": {
+    "mtime": 1778235795.4495997,
+    "hash": "9eff5a1c4c93d019f0da5aa26db4ee08"
+  },
+  "/Users/pranamyajain/100x-civilization-/README.md": {
+    "mtime": 1777122605.6007175,
+    "hash": "d2f4978f9ea2d3b95ea16e4302fe52cb"
+  }
+}

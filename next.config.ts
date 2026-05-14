@@ -1,7 +1,8 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  reactStrictMode: true,
+  // Disabled during testing — re-enable before production deploy
+  reactStrictMode: false,
   eslint: {
     ignoreDuringBuilds: true,
   },

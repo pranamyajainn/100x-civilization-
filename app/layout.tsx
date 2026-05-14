@@ -9,8 +9,8 @@ const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrai
 const cormorant = Cormorant_Garamond({ weight: ["400", "600", "700"], style: ["normal", "italic"], subsets: ["latin"], variable: "--font-cormorant", display: 'swap', adjustFontFallback: true, preload: true });
 
 export const metadata: Metadata = {
-  title: "The 100x Civilization. Members-only economic engine for 100x cohorts.",
-  description: "Seven cohorts. One civilization. A community proposal for 100x Engineers.",
+  title: "100x Civilization — The opportunity network for 100xEngineers alumni.",
+  description: "Invite-only. Live now. Post roles, find co-founders, and make warm intros across all 100xEngineers cohorts.",
   metadataBase: new URL(process.env.APP_URL || 'http://localhost:3000'),
   openGraph: {
     images: ["/og-image.png"],

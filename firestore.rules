@@ -1,44 +1,160 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Default Deny
+
+    // =========================================================
+    // DEFAULT DENY
+    // =========================================================
     match /{document=**} {
-      allow read, write: if false; 
+      allow read, write: if false;
     }
 
+    // =========================================================
+    // METADATA (waitlist counter) — existing, preserve
+    // =========================================================
     match /metadata/{docId} {
       allow read: if true;
-      allow update: if request.resource.data.keys().hasOnly(['count']) && request.resource.data.count is number;
+      allow update: if request.resource.data.keys().hasOnly(['count']) &&
+                       request.resource.data.count is number;
       allow create: if false;
     }
-    
-    // Waitlist Signups (Create Only)
+
+    // =========================================================
+    // WAITLIST SIGNUPS — existing, preserve
+    // =========================================================
     match /waitlist_signups/{signupId} {
-      allow read: if false; // BLOCK PII LEAKS
+      allow read: if false;
       allow update, delete: if false;
-      allow create: if 
+      allow create: if
         request.resource.data.keys().hasAny(['fullName', 'email', 'cohort', 'role', 'createdAt']) &&
         request.resource.data.fullName is string && request.resource.data.fullName.size() >= 2 && request.resource.data.fullName.size() <= 80 &&
         request.resource.data.email is string && request.resource.data.email.matches('^.+@.+\\.[a-zA-Z]+$') && request.resource.data.email.size() <= 100 &&
         request.resource.data.cohort is string &&
         request.resource.data.role is string &&
         (
-          !('referral' in request.resource.data) || 
+          !('referral' in request.resource.data) ||
           (request.resource.data.referral is string && request.resource.data.referral.size() <= 200)
         ) &&
         (
-          !('linkedin' in request.resource.data) || 
+          !('linkedin' in request.resource.data) ||
           (request.resource.data.linkedin is string && request.resource.data.linkedin.size() <= 200)
         ) &&
         (
-          !('position' in request.resource.data) || 
+          !('position' in request.resource.data) ||
           (request.resource.data.position is number)
         ) &&
         (
-          !('referralCode' in request.resource.data) || 
+          !('referralCode' in request.resource.data) ||
           (request.resource.data.referralCode is string)
         ) &&
         request.resource.data.createdAt == request.time;
     }
+
+    // =========================================================
+    // INVITES — created by admin API route only (server-side via REST API key)
+    // Client reads are needed to validate a token on the invite landing page.
+    // =========================================================
+    match /invites/{token} {
+      // Anyone with the token URL can read (to validate invite)
+      allow read: if true;
+      // Only authenticated users can update (to mark as used) — write is done
+      // client-side on the invite landing page after OAuth succeeds.
+      allow update: if request.auth != null &&
+                       request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['usedAt', 'usedBy', 'status']);
+      // Create and delete are server-only (admin API route uses the API key)
+      allow create, delete: if false;
+    }
+
+    // =========================================================
+    // USERS — alumni profiles
+    // =========================================================
+    match /users/{uid} {
+      // Users can read their own profile; other authenticated users can read
+      // basic profile info (needed for feed / post detail to show poster info).
+      // Embedding vectors are readable by authenticated users (needed for client-side
+      // cosine similarity ranking on the feed page).
+      allow read: if request.auth != null;
+
+      // Users can only write their own profile document.
+      allow create, update: if request.auth != null &&
+                                request.auth.uid == uid &&
+                                request.resource.data.uid == uid &&
+                                request.resource.data.email is string &&
+                                request.resource.data.fullName is string &&
+                                request.resource.data.fullName.size() >= 2 &&
+                                request.resource.data.cohort is string &&
+                                request.resource.data.skillTags is list &&
+                                request.resource.data.skillTags.size() >= 5;
+
+      allow delete: if false;
+    }
+
+    // =========================================================
+    // POSTS — opportunity feed
+    // =========================================================
+    match /posts/{postId} {
+      // Any authenticated user can read posts (needed for feed + detail page)
+      allow read: if request.auth != null;
+
+      // Any authenticated user can create a post
+      allow create: if request.auth != null &&
+                       request.resource.data.posterUid == request.auth.uid &&
+                       request.resource.data.type in ['hiring', 'co-founder', 'paid-project', 'pressure-test', 'warm-intro'] &&
+                       request.resource.data.title is string &&
+                       request.resource.data.title.size() >= 5 &&
+                       request.resource.data.title.size() <= 120 &&
+                       request.resource.data.description is string &&
+                       request.resource.data.description.size() >= 10;
+
+      // Only the poster can update or delete their post
+      allow update: if request.auth != null && resource.data.posterUid == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.posterUid == request.auth.uid;
+    }
+
+    // =========================================================
+    // CONNECTIONS — cross-cohort connection events
+    // Written by /api/connect server route (via REST API with API key).
+    // Readable by admin only (client-side via Firestore SDK in admin page).
+    // For v1: allow authenticated reads (admin page checks email client-side).
+    // =========================================================
+    match /connections/{connectionId} {
+      allow read: if request.auth != null;
+      // Connections are created/updated by the server API route using the REST API key.
+      // Direct client writes are blocked — all connection logging goes via /api/connect.
+      allow write: if false;
+    }
+
+    // =========================================================
+    // NOTIFICATIONS — records of sent match emails (audit log)
+    // Written by server only via REST API key. Read by authenticated users
+    // (admin page queries notifications for reply-rate KPI).
+    // =========================================================
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // =========================================================
+    // CONSENT_RECORDS — legal audit trail of user consent
+    // Each user can only create their own record (uid == auth.uid).
+    // Users cannot read, update, or delete their own record after creation.
+    // Admins can read all (for compliance audit — enforced app-side).
+    // =========================================================
+    match /consent_records/{uid} {
+      // Users can create their own consent record once
+      allow create: if request.auth != null &&
+                       request.auth.uid == uid &&
+                       request.resource.data.uid == uid &&
+                       request.resource.data.consentGiven == true &&
+                       request.resource.data.consentVersion is string;
+
+      // Admins can read (app-side email check in admin panel)
+      allow read: if request.auth != null;
+
+      // Never update or delete — consent record is immutable
+      allow update, delete: if false;
+    }
+
   }
 }

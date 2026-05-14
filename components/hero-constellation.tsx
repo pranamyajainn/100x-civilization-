@@ -63,9 +63,7 @@ export function HeroConstellation() {
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full overflow-visible"
-        initial={{ rotate: 0 }}
-        animate={prefersReducedMotion ? {} : { rotate: 360 }}
-        transition={{ repeat: Infinity, duration: 180, ease: "linear" }}
+        layout={false}
       >
         <defs>
           <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">

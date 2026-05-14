@@ -6,6 +6,7 @@ const HeroConstellation = dynamic(() => import('./hero-constellation').then(mod 
 import { MagneticButton } from './magnetic-button';
 import { motion, useScroll, useTransform, useReducedMotion } from 'motion/react';
 import { useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 /**
  * DIAGNOSIS ANSWERS:
@@ -18,6 +19,7 @@ import { useRef } from 'react';
 
 export function Hero() {
   const { openModal } = useModalStore();
+  const router = useRouter();
   const prefersReducedMotion = useReducedMotion();
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
@@ -58,7 +60,7 @@ export function Hero() {
               <div className="w-1 h-1 bg-brand-neon rounded-full" />
             </motion.div>
             <span className="text-[11px] font-mono tracking-[0.2em] text-brand-neon uppercase">
-              A community project
+              Live now · Invite only
             </span>
           </motion.div>
           
@@ -105,7 +107,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 1.1 }}
             className="mt-6 text-[18px] text-brand-white/60 leading-[1.6] font-sans max-w-[480px]"
           >
-            A members-only economic engine for 100x cohorts. Trust compounds. Wealth stays inside.
+            The opportunity network for 100xEngineers alumni. Post roles, find co-founders, and make warm intros — inside your cohort and across every cohort before you.
           </motion.p>
           
           {/* CTA Group */}
@@ -113,18 +115,20 @@ export function Hero() {
             initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 1.4 }}
             className="mt-10 flex flex-col sm:flex-row items-start gap-4"
           >
+            {/* PRIMARY CTA: product is live — route to /invite */}
             <MagneticButton 
               variant="custom"
-              onClick={openModal}
+              onClick={() => router.push('/invite')}
               className="bg-brand-neon text-brand-black font-semibold px-[36px] py-[18px] rounded-none hover:bg-[#FF6A26] transition-colors border-none"
             >
-              Request Access
+              Join 100x Civilization
             </MagneticButton>
+            {/* SECONDARY CTA: sign in via invite link */}
             <button 
-              onClick={openModal}
+              onClick={() => router.push('/invite')}
               className="bg-transparent text-brand-white font-semibold px-[36px] py-[18px] rounded-none border border-brand-white/20 hover:bg-brand-white/5 transition-colors"
             >
-              Learn more
+              Sign In
             </button>
           </motion.div>
           
@@ -134,7 +138,7 @@ export function Hero() {
             className="mt-6"
           >
             <span className="font-mono text-[11px] text-brand-white/40 tracking-wider">
-              7 COHORTS · 500+ BUILDERS · INVITE ONLY
+              7 COHORTS · 500+ BUILDERS · LIVE NOW
             </span>
           </motion.div>
           

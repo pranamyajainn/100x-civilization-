@@ -1,0 +1,208 @@
+{
+  "communities": {
+    "0": [
+      "app_page_home",
+      "app_page_tsx",
+      "components_cursor_cursor",
+      "components_cursor_tsx",
+      "components_easter_egg_eastereggsound",
+      "components_easter_egg_tsx",
+      "components_footer_footer",
+      "components_footer_tsx",
+      "components_problem_tsx",
+      "components_scroll_reveal_tsx",
+      "components_section_divider_tsx",
+      "components_solution_pillars",
+      "components_solution_tsx",
+      "components_team_team",
+      "components_team_teamcard",
+      "components_team_tsx",
+      "components_tilt_card_tsx",
+      "components_vision_tsx",
+      "components_vision_vision"
+    ],
+    "1": [
+      "components_cta_finalcta",
+      "components_cta_tsx",
+      "components_hero_aurora_heroaurora",
+      "components_hero_aurora_tsx",
+      "components_hero_hero",
+      "components_hero_tsx",
+      "components_magnetic_button_tsx",
+      "components_shimmer_effect_shimmerstore",
+      "components_shimmer_effect_tsx",
+      "components_shimmer_effect_useshimmerstore",
+      "components_waitlist_modal_tsx",
+      "lib_store_modalstore",
+      "lib_store_ts",
+      "lib_store_usemodalstore"
+    ],
+    "2": [
+      "app_layout_cormorant",
+      "app_layout_inter",
+      "app_layout_jetbrains",
+      "app_layout_metadata",
+      "app_layout_outfit",
+      "app_layout_rootlayout",
+      "app_layout_tsx",
+      "app_layout_viewport",
+      "components_lenis_provider_reactlenis",
+      "components_lenis_provider_tsx"
+    ],
+    "3": [
+      "readme_100x_civilization",
+      "readme_100x_engineers",
+      "readme_firebase",
+      "readme_framer_motion",
+      "readme_nextjs_14",
+      "readme_tailwind_css",
+      "readme_vercel",
+      "readme_waitlist_signups"
+    ],
+    "4": [
+      "components_live_counter_tsx",
+      "components_waitlist_form_celebrationstate",
+      "components_waitlist_form_shorthash",
+      "components_waitlist_form_tsx",
+      "lib_firebase_db",
+      "lib_firebase_ts"
+    ],
+    "5": [
+      "100x_civilization_eslint_config_dirname",
+      "100x_civilization_eslint_config_filename",
+      "eslint_config_mjs"
+    ],
+    "6": [
+      "components_hero_constellation_center",
+      "components_hero_constellation_nodes",
+      "components_hero_heroconstellation"
+    ],
+    "7": [
+      "100x_civilization_postcss_config_config",
+      "postcss_config_mjs"
+    ],
+    "8": [
+      "components_scramble_scrambletext",
+      "components_scramble_tsx"
+    ],
+    "9": [
+      "components_count_up_countup",
+      "components_count_up_tsx"
+    ],
+    "10": [
+      "hooks_use_mobile_ts",
+      "hooks_use_mobile_useismobile"
+    ],
+    "11": [
+      "lib_utils_cn",
+      "lib_utils_ts"
+    ],
+    "12": [
+      "readme_firebase_applet_config_json",
+      "readme_lib_firebase_ts"
+    ],
+    "13": [
+      "next_env_d_ts"
+    ],
+    "14": [
+      "next_config_ts"
+    ]
+  },
+  "cohesion": {
+    "0": 0.15,
+    "1": 0.24,
+    "2": 0.2,
+    "3": 0.25,
+    "4": 0.53,
+    "5": 0.67,
+    "6": 0.67,
+    "7": 1.0,
+    "8": 1.0,
+    "9": 1.0,
+    "10": 1.0,
+    "11": 1.0,
+    "12": 1.0,
+    "13": 1.0,
+    "14": 1.0
+  },
+  "gods": [
+    {
+      "id": "lib_store_usemodalstore",
+      "label": "useModalStore",
+      "degree": 7
+    },
+    {
+      "id": "readme_100x_civilization",
+      "label": "The 100x Civilization",
+      "degree": 6
+    },
+    {
+      "id": "components_hero_heroconstellation",
+      "label": "HeroConstellation",
+      "degree": 3
+    },
+    {
+      "id": "components_hero_hero",
+      "label": "Hero()",
+      "degree": 3
+    },
+    {
+      "id": "components_cta_finalcta",
+      "label": "FinalCTA()",
+      "degree": 3
+    },
+    {
+      "id": "lib_firebase_db",
+      "label": "db",
+      "degree": 3
+    },
+    {
+      "id": "components_vision_vision",
+      "label": "Vision()",
+      "degree": 2
+    },
+    {
+      "id": "components_cursor_cursor",
+      "label": "Cursor()",
+      "degree": 2
+    },
+    {
+      "id": "components_team_team",
+      "label": "team",
+      "degree": 2
+    },
+    {
+      "id": "components_easter_egg_eastereggsound",
+      "label": "EasterEggSound()",
+      "degree": 2
+    }
+  ],
+  "surprises": [
+    {
+      "source": "Hero()",
+      "target": "useModalStore",
+      "source_files": [
+        "components/hero.tsx",
+        "lib/store.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories"
+    },
+    {
+      "source": "FinalCTA()",
+      "target": "useModalStore",
+      "source_files": [
+        "components/cta.tsx",
+        "lib/store.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories"
+    }
+  ],
+  "tokens": {
+    "input": 698,
+    "output": 1754
+  }
+}

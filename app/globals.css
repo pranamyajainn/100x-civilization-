@@ -22,3 +22,32 @@ body {
     text-wrap: balance;
   }
 }
+
+/* ── Aurora blob animations ─────────────────────────────────────────────── */
+/* Defined globally to avoid <style> tag inside components, which causes     */
+/* Next.js 15 hydration mismatches (server vs client render differ).          */
+
+@keyframes aurora-a {
+  0%   { transform: translate(-50%, -50%) translate(0px, 0px); }
+  25%  { transform: translate(-50%, -50%) translate(400px, 300px); }
+  50%  { transform: translate(-50%, -50%) translate(0px, -300px); }
+  75%  { transform: translate(-50%, -50%) translate(-400px, 200px); }
+  100% { transform: translate(-50%, -50%) translate(0px, 0px); }
+}
+
+@keyframes aurora-b {
+  0%   { transform: translate(-50%, -50%) translate(0px, 0px); }
+  25%  { transform: translate(-50%, -50%) translate(-300px, -400px); }
+  50%  { transform: translate(-50%, -50%) translate(0px, 300px); }
+  75%  { transform: translate(-50%, -50%) translate(300px, -200px); }
+  100% { transform: translate(-50%, -50%) translate(0px, 0px); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .aurora-blob-a {
+    animation: aurora-a 28s ease-in-out infinite;
+  }
+  .aurora-blob-b {
+    animation: aurora-b 22s ease-in-out infinite;
+  }
+}

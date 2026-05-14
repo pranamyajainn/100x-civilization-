@@ -1,14 +1,18 @@
 'use client';
-import { MagneticButton } from './magnetic-button';
 import { ScrollReveal } from './scroll-reveal';
-import { useModalStore } from '@/lib/store';
+import Link from 'next/link';
 
+/**
+ * FinalCTA — Bottom of landing page call to action.
+ *
+ * CHANGE: Removed openModal / waitlist modal trigger. Both buttons now route
+ * directly to /invite which is the live sign-in page. The waitlist modal
+ * is no longer triggered from here — the product is live.
+ */
 export function FinalCTA() {
-  const { openModal } = useModalStore();
-
   return (
     <section className="relative w-full max-w-4xl mx-auto px-6 md:px-12 py-24 md:py-32 text-center overflow-hidden">
-      <div 
+      <div
         className="absolute inset-0 pointer-events-none opacity-20 mix-blend-screen"
         style={{
           background: 'radial-gradient(ellipse at center, #FF4D00 0%, transparent 60%)',
@@ -19,12 +23,23 @@ export function FinalCTA() {
         <h2 className="text-4xl md:text-6xl font-display font-medium text-brand-white leading-tight">
           Seven cohorts.<br className="hidden sm:block" /> One economy.
         </h2>
-        <p className="text-lg md:text-xl text-brand-muted font-mono tracking-wide mb-8">
-          Wealth compounds inside. The door closes when it closes.
+        <p className="text-lg md:text-xl text-brand-muted font-mono tracking-wide mb-4">
+          The platform is live. Invite-only.
         </p>
-        <MagneticButton onClick={openModal}>
-          Request access
-        </MagneticButton>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Link
+            href="/invite"
+            className="bg-brand-neon text-brand-black font-bold uppercase tracking-widest px-8 py-4 hover:bg-[#FF6A26] transition-colors"
+          >
+            Join 100x Civilization
+          </Link>
+          <Link
+            href="/invite"
+            className="border border-brand-white/20 text-brand-white font-semibold px-8 py-4 hover:bg-brand-white/5 transition-colors"
+          >
+            Sign In
+          </Link>
+        </div>
       </ScrollReveal>
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes pulse-slow {
