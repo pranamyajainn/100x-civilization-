@@ -7,25 +7,25 @@ const team = [
   {
     name: "Pranamya Jain",
     role: "AI Solutions Architect",
-    desc: "Full-stack AI builder, agentic workflows, RAG, multi-LLM orchestration. Bringing the closed-loop economic playbook to 100x.",
+    desc: "Full-stack AI builder, agentic workflows, RAG, multi-LLM orchestration. Built 100x Civilization from zero to production.",
     tag: "Mini Hackathon Winner"
   },
   {
     name: "Zara Kennedy",
     role: "Communications Strategist",
-    desc: "GCC media, brand storytelling, 35M+ earned impressions across tier-1 media.",
+    desc: "GCC media, brand storytelling, 35M+ earned impressions across tier-1 media. Leading community growth and member communications.",
     tag: "Mini Hackathon Runner-up"
   },
   {
     name: "Nakshatra Sain",
     role: "Psychology-driven Marketing",
-    desc: "AI content production, 10K+ creators monetized, 5M+ impressions on X, 100+ clients.",
+    desc: "AI content production, 10K+ creators monetized, 5M+ impressions on X. Driving acquisition and outreach strategy.",
     tag: null
   },
   {
     name: "Arunkumar S.V",
     role: "Applied AI Engineer",
-    desc: "Pharmacoinformatics, data analysis, applied AI, backend systems.",
+    desc: "Applied AI, pharmacoinformatics, backend systems. Ensuring the platform runs reliably at scale.",
     tag: null
   }
 ];

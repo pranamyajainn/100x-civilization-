@@ -24,8 +24,8 @@ export function FinalCTA() {
           The people you need are already here.
         </h2>
         <p className="text-lg md:text-xl text-brand-muted font-mono tracking-wide mb-4 max-w-2xl">
-          <span className="block">Stop posting on LinkedIn for collaborators</span>
-          <span className="block">who are already inside the community.</span>
+          <span className="block">Stop searching outside the community for</span>
+          <span className="block">collaborators who are already inside it.</span>
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <Link

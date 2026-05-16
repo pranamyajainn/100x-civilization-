@@ -244,7 +244,7 @@ export function Hero() {
               <div className="w-1 h-1 bg-brand-neon rounded-full" />
             </motion.div>
             <span className="text-[11px] font-mono tracking-[0.2em] text-brand-neon uppercase">
-              Live now · Invite only
+              LIVE NOW · INVITE ONLY · 7 COHORTS · 500+ BUILDERS
             </span>
           </motion.div>
           
@@ -256,7 +256,7 @@ export function Hero() {
               transition={prefersReducedMotion ? { duration: 0.45, delay: 0.02 } : { duration: 0.45, delay: 0.02, ease: [0.22, 1, 0.36, 1] }}
               className="inline-block text-brand-white"
             >
-              Stop going to other platforms
+              The people you need
             </motion.span>
             <span className="overflow-hidden mt-1">
               <motion.span
@@ -265,7 +265,7 @@ export function Hero() {
                 transition={{ duration: 0.5, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
                 className="inline-block font-[family-name:var(--font-cormorant)] italic font-medium text-[64px] sm:text-[72px] lg:text-[104px] text-brand-neon"
               >
-                to find people
+                are already inside.
               </motion.span>
             </span>
             <motion.span
@@ -274,7 +274,7 @@ export function Hero() {
               transition={prefersReducedMotion ? { duration: 0.45, delay: 0.12 } : { duration: 0.45, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
               className="inline-block text-brand-white"
             >
-              already inside.
+              Stop searching outside.
             </motion.span>
           </h1>
           
@@ -283,9 +283,10 @@ export function Hero() {
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.16 }}
             className="mt-6 text-[18px] text-brand-white/60 leading-[1.6] font-sans max-w-[480px]"
           >
-            <span className="block">A private AI-powered opportunity network for</span>
-            <span className="block">100xEngineers alumni. Post what you need.</span>
-            <span className="block">Find who can help. Connect directly.</span>
+            <span className="block">100x Civilization is the private network where</span>
+            <span className="block">100xEngineers alumni post what they need, find who</span>
+            <span className="block">can help, and connect directly — without leaving</span>
+            <span className="block">the community that built them.</span>
           </motion.p>
           
           {/* CTA Group */}
@@ -316,7 +317,7 @@ export function Hero() {
             className="mt-6"
           >
             <span className="font-mono text-[11px] text-brand-white/40 tracking-wider">
-              7 COHORTS · 500+ BUILDERS · INVITE-ONLY
+              7 COHORTS · 500+ BUILDERS · LIVE NOW
             </span>
           </motion.div>
           

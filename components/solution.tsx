@@ -8,17 +8,17 @@ const pillars = [
   {
     num: "01",
     title: "B2B Marketplace",
-    desc: "Hire and get hired within our network."
+    desc: "Post a role or find your next opportunity inside a community that already knows your work."
   },
   {
     num: "02",
     title: "Skill Exchange",
-    desc: "Trade expertise, no money, pure leverage."
+    desc: "Get help with what you don't know. Offer what you do. No invoices, no friction."
   },
   {
     num: "03",
     title: "Deal Flow",
-    desc: "Gigs, referrals, co-founder matching. 100x members exclusive only."
+    desc: "Gigs, co-founder matching, referrals. Exclusively for 100xEngineers alumni."
   },
   {
     num: "04",
@@ -53,10 +53,10 @@ export function Solution() {
       <div className="relative z-10">
         <ScrollReveal className="mb-12 md:mb-16">
           <h2 className="text-3xl md:text-5xl font-display font-medium text-brand-white mb-4">
-            The 100x Civilization
+            Everything your cohort needs. One place.
           </h2>
           <p className="font-mono text-brand-neon uppercase tracking-widest text-sm">
-            One community. Infinite leverage.
+            Post what you need. Find who can help. Connect directly.
           </p>
         </ScrollReveal>
 

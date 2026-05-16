@@ -17,14 +17,14 @@ export function Problem() {
         <ScrollReveal>
           <div className="flex flex-col gap-6">
             <h2 className="text-4xl md:text-5xl lg:text-7xl font-display font-medium text-brand-neon">
-              Trust Disappears At The Exit.
+              When the cohort ends, the network disappears.
             </h2>
           </div>
         </ScrollReveal>
         
         <div className="prose prose-invert max-w-none text-brand-muted text-base sm:text-lg leading-relaxed">
           <ScrollReveal delay={0.1} as="p" className="mb-6 text-xl md:text-2xl text-brand-muted/80 font-sans max-w-2xl mt-4 text-balance">
-            You build deep trust within your cohort. But when the program ends, that leverage evaporates. No structure exists to capture it.
+            You spent months building real trust with sharp builders. Then the program ends and that trust has nowhere to go. You end up searching outside the community for collaborators who were in your cohort the whole time.
           </ScrollReveal>
         </div>
       </div>
