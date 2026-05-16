@@ -1,31 +1,28 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
 
-    // =========================================================
-    // DEFAULT DENY
-    // =========================================================
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return signedIn() &&
+        firestore.get(/databases/ai-studio-2528f7ed-584f-4acd-b0fb-b766dcc4cbcf/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }
 
-    // =========================================================
-    // CERTIFICATES — alumni verification uploads
-    // Users can only write to their own uid-scoped path.
-    // Max file size: 5 MB.
-    // Admin can read all certificates (for verification review).
-    // =========================================================
     match /certificates/{uid}/{fileName} {
-      // Authenticated users can upload only to their own path
-      allow create: if request.auth != null &&
-                       request.auth.uid == uid &&
+      allow create: if isOwner(uid) &&
                        request.resource.size <= 5 * 1024 * 1024 &&
-                       request.resource.contentType.matches('application/(pdf)|image/(jpeg|png)');
-
-      // Users can read their own cert; authenticated users (admins) can read all
-      allow read: if request.auth != null;
-
-      // No updates or deletes client-side
+                       request.resource.contentType.matches('(application/pdf|image/jpeg|image/png)');
+      allow read: if isOwner(uid) || isAdmin();
       allow update, delete: if false;
     }
 

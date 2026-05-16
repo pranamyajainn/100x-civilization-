@@ -1,100 +1,71 @@
-/**
- * POST /api/notify
- *
- * Triggered after a new post is created. Fetches all alumni profiles,
- * ranks them by cosine similarity to the post embedding, and sends
- * smart match notification emails to the top N matches.
- *
- * This route is called server-side from the post creation flow.
- * It reads all users from Firestore (admin SDK not available in edge —
- * uses Firebase client SDK with the service account stored in the app).
- *
- * DECISION: Using Admin SDK via firebase-admin initialisation guarded
- * by a simple lazy-init pattern. If GOOGLE_APPLICATION_CREDENTIALS or
- * FIREBASE_SERVICE_ACCOUNT_JSON is absent, falls back to client SDK with
- * wide read rules (see firestore.rules — server-side reads only).
- *
- * DECISION: To keep this buildable without firebase-admin in package.json,
- * we use the Firestore REST API directly (authenticated via the API key
- * from firebase-applet-config.json, which is already present in the repo).
- * This avoids adding new npm dependencies at build time.
- *
- * Request body:
- * {
- *   postId: string,
- *   postTitle: string,
- *   postType: string,
- *   postDescription: string,
- *   postSkillTags: string[],
- *   postEmbedding: number[],
- *   posterUid: string,
- *   posterName: string,
- *   posterCohort: string,
- * }
- */
-
 import { NextRequest, NextResponse } from "next/server";
+import { FieldValue } from "firebase-admin/firestore";
 import { rankMatches, UserProfile } from "@/lib/matching";
 import { sendMatchNotification } from "@/lib/email";
-import firebaseConfig from "@/firebase-applet-config.json";
+import { verifyIdToken } from "@/lib/auth-middleware";
+import { generateEmbedding } from "@/lib/embeddings";
+import { adminDb } from "@/lib/firebase-admin";
+import { checkRateLimit, getRequestIp } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
-// Allow up to 60s for this route (Vercel Pro / hobby has 10s default)
 export const maxDuration = 60;
 
-const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/${firebaseConfig.firestoreDatabaseId}/documents`;
-
 async function fetchAllUsers(): Promise<UserProfile[]> {
-  const apiKey = firebaseConfig.apiKey;
-  const url = `${FIRESTORE_BASE}/users?key=${apiKey}&pageSize=500`;
+  // TODO v2: replace with pgvector ANN query
+  // Current: O(n) full scan, acceptable to ~500 users
+  const snapshot = await adminDb.collection("users").limit(500).get();
 
-  const res = await fetch(url);
-  if (!res.ok) {
-    console.error("[notify] Failed to fetch users:", await res.text());
-    return [];
-  }
+  return snapshot.docs
+    .map((doc) => {
+      const data = doc.data();
+      if (data.status !== "approved") {
+        return null;
+      }
 
-  const data = await res.json();
-  const docs = data.documents ?? [];
-
-  return docs.map((doc: any) => {
-    const f = doc.fields ?? {};
-    return {
-      uid: f.uid?.stringValue ?? "",
-      email: f.email?.stringValue ?? "",
-      fullName: f.fullName?.stringValue ?? "",
-      cohort: f.cohort?.stringValue ?? "",
-      skillTags: (f.skillTags?.arrayValue?.values ?? []).map(
-        (v: any) => v.stringValue ?? ""
-      ),
-      embedding: (f.embedding?.arrayValue?.values ?? []).map(
-        (v: any) => v.doubleValue ?? v.integerValue ?? 0
-      ),
-      notificationsEnabled: f.notificationsEnabled?.booleanValue ?? true,
-      // Exclude users who withdrew consent
-      hiddenFromFeed: f.hiddenFromFeed?.booleanValue ?? false,
-      consentGiven: f.consentGiven?.booleanValue ?? true,
-    };
-  });
+      return {
+        uid: data.uid ?? doc.id,
+        email: data.email ?? "",
+        fullName: data.fullName ?? "",
+        cohort: data.cohort ?? "",
+        skillTags: Array.isArray(data.skillTags) ? data.skillTags : [],
+        embedding: Array.isArray(data.embedding) ? data.embedding : [],
+        notificationsEnabled: data.notificationsEnabled ?? true,
+        hiddenFromFeed: data.hiddenFromFeed ?? false,
+      } as UserProfile;
+    })
+    .filter((user): user is UserProfile => user !== null);
 }
 
 export async function POST(req: NextRequest) {
+  const authUser = await verifyIdToken(req);
+  if (!authUser) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const ip = getRequestIp(req);
+  const limit = checkRateLimit(`notify:${ip}`, 5, 60 * 1000);
+  if (!limit.allowed) {
+    return NextResponse.json({ error: "Too many notification requests. Please wait a minute." }, { status: 429 });
+  }
+
   try {
     const body = await req.json();
-    const {
-      postId,
-      postTitle,
-      postType,
-      postDescription,
-      postSkillTags,
-      postEmbedding,
-      posterUid,
-      posterName,
-      posterCohort,
-    } = body;
+    const postId = typeof body.postId === "string" ? body.postId : "";
 
-    if (!postId || !postType || !posterUid) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!postId) {
+      return NextResponse.json({ error: "postId is required" }, { status: 400 });
+    }
+
+    const postDoc = await adminDb.collection("posts").doc(postId).get();
+    if (!postDoc.exists) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    const post = postDoc.data() ?? {};
+    const authorUid = post.authorUid ?? post.posterUid;
+
+    if (authorUid !== authUser.uid) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const users = await fetchAllUsers();
@@ -102,16 +73,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ matched: 0, sent: 0 });
     }
 
+    const warnings: string[] = [];
+    const postEmbeddingSource = buildPostEmbeddingSource(post);
+    let postEmbedding: number[] | null = Array.isArray(post.embedding) && post.embedding.length > 0
+      ? post.embedding
+      : null;
+
+    if (!postEmbedding && postEmbeddingSource.trim().length > 0) {
+      try {
+        postEmbedding = await generateEmbedding(postEmbeddingSource);
+      } catch (error) {
+        console.error("[notify] post embedding generation failed:", error);
+        warnings.push("Match notifications were sent without a semantic embedding.");
+      }
+    }
+
     const matches = rankMatches(
       {
-        title: postTitle,
-        type: postType,
-        description: postDescription,
-        skillTags: postSkillTags ?? [],
+        title: post.title ?? "",
+        type: post.type ?? "",
+        description: post.description ?? "",
+        skillTags: Array.isArray(post.skillTags) ? post.skillTags : [],
         embedding: postEmbedding ?? null,
       },
       users,
-      posterUid
+      authUser.uid
     );
 
     const appUrl = process.env.APP_URL ?? "http://localhost:3000";
@@ -122,46 +108,56 @@ export async function POST(req: NextRequest) {
         const success = await sendMatchNotification({
           to: match.email,
           recipientName: match.fullName,
-          posterName,
-          posterCohort,
-          opportunityType: postType,
-          opportunityTitle: postTitle,
+          posterName: post.posterName ?? "",
+          posterCohort: post.posterCohort ?? "",
+          opportunityType: post.type ?? "",
+          opportunityTitle: post.title ?? "",
           matchedSkills: match.matchedSkills,
           postUrl: `${appUrl}/app/posts/${postId}`,
-          unsubscribeUrl: `${appUrl}/api/unsubscribe?uid=${match.uid}`,
+          settingsUrl: `${appUrl}/app/profile`,
         });
 
         if (success) {
           sent++;
-          // Write notification audit record so /api/connect can mark replied=true
           const notifId = `${match.uid}_${postId}`;
-          const notifUrl = `${FIRESTORE_BASE}/notifications/${notifId}?key=${firebaseConfig.apiKey}`;
-          fetch(notifUrl, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              fields: {
-                uid: { stringValue: match.uid },
-                email: { stringValue: match.email },
-                postId: { stringValue: postId },
-                postType: { stringValue: postType },
-                postTitle: { stringValue: postTitle },
-                posterUid: { stringValue: posterUid },
-                posterCohort: { stringValue: posterCohort },
-                sentAt: { timestampValue: new Date().toISOString() },
-                replied: { booleanValue: false },
-                isSeedData: { booleanValue: false },
-              },
-            }),
-          }).catch((e) => console.error("[notify] write notification doc error:", e));
+          await adminDb.collection("notifications").doc(notifId).set({
+            uid: match.uid,
+            email: match.email,
+            postId,
+            postType: post.type ?? "",
+            postTitle: post.title ?? "",
+            posterUid: authUser.uid,
+            posterCohort: post.posterCohort ?? "",
+            sentAt: FieldValue.serverTimestamp(),
+            replied: false,
+            isSeedData: false,
+          });
         }
       })
     );
 
+    if (matches.length > 0 && sent < matches.length) {
+      warnings.push("Some match notification emails could not be delivered.");
+    }
+
     console.log(`[notify] post=${postId} matched=${matches.length} sent=${sent}`);
-    return NextResponse.json({ matched: matches.length, sent });
+    return NextResponse.json({ matched: matches.length, sent, warnings });
   } catch (err) {
     console.error("[notify] Error:", err);
+    if (err instanceof Error && err.message.includes("OPENAI_API_KEY not configured")) {
+      return NextResponse.json({ error: "Embeddings are not configured on the server." }, { status: 503 });
+    }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+}
+
+function buildPostEmbeddingSource(post: Record<string, unknown>): string {
+  const type = typeof post.type === "string" ? post.type : "";
+  const title = typeof post.title === "string" ? post.title : "";
+  const description = typeof post.description === "string" ? post.description : "";
+  const skillTags = Array.isArray(post.skillTags)
+    ? post.skillTags.filter((tag): tag is string => typeof tag === "string")
+    : [];
+
+  return [type, title, description, skillTags.join(" ")].filter((part) => part.trim().length > 0).join(" ");
 }

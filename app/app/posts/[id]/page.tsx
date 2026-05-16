@@ -1,30 +1,18 @@
 'use client';
 
-/**
- * /app/posts/[id] — Post detail page.
- *
- * Shows the full opportunity with:
- * - Poster info (name, cohort)
- * - Full description + all fields
- * - "Connect" button: reveals contact email (if contactVisible=true) OR shows in-platform
- *   message fallback if contact is hidden
- * - Connection event logged to Firestore via /api/connect on first connect action
- *
- * PRD: "Connection is defined as: user A views post by user B AND sends message
- * or reveals contact info. View alone does not count."
- */
-
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { skillLabel } from '@/lib/taxonomy';
 import { motion } from 'motion/react';
-import { ArrowLeft, Loader2, Mail, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Check, Copy, Loader2, Mail } from 'lucide-react';
+import { auth, db } from '@/lib/firebase';
+import { getAuthorizedHeaders } from '@/lib/client-session';
+import { skillLabel } from '@/lib/taxonomy';
 
 const TYPE_LABELS: Record<string, string> = {
-  'hiring': 'Hiring',
+  hiring: 'Hiring',
   'co-founder': 'Co-Founder Search',
   'paid-project': 'Paid Project',
   'pressure-test': 'Pressure Test',
@@ -49,14 +37,21 @@ interface PostDetail {
   createdAt: string;
 }
 
+interface PosterContact {
+  fullName: string;
+  email: string;
+  phone?: string;
+  linkedinUrl?: string;
+}
+
 export default function PostDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const postId = params.id as string;
+  const postId = typeof params?.id === 'string' ? params.id : '';
 
   const [user, setUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<any>(null);
   const [post, setPost] = useState<PostDetail | null>(null);
+  const [posterContact, setPosterContact] = useState<PosterContact | null>(null);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [connected, setConnected] = useState(false);
@@ -65,70 +60,107 @@ export default function PostDetailPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
-      if (!u) { router.push('/'); return; }
-      setUser(u);
-      const profileSnap = await getDoc(doc(db, 'users', u.uid));
-      if (profileSnap.exists()) setUserProfile(profileSnap.data());
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (!currentUser) {
+        router.push('/');
+        return;
+      }
+
+      setUser(currentUser);
     });
-    return unsub;
+
+    return unsubscribe;
   }, [router]);
 
   useEffect(() => {
     async function fetchPost() {
       setLoading(true);
+      setError('');
+
       try {
         const snap = await getDoc(doc(db, 'posts', postId));
-        if (!snap.exists()) { setError('Opportunity not found.'); return; }
-        const d = snap.data();
-        setPost({
+        if (!snap.exists()) {
+          setError('This opportunity is no longer available.');
+          return;
+        }
+
+        const data = snap.data();
+        const nextPost: PostDetail = {
           id: snap.id,
-          type: d.type,
-          title: d.title,
-          description: d.description,
-          skillTags: d.skillTags ?? [],
-          compensation: d.compensation,
-          commitment: d.commitment,
-          equity: d.equity,
-          targetIntro: d.targetIntro,
-          posterName: d.posterName,
-          posterCohort: d.posterCohort,
-          posterUid: d.posterUid,
-          contactVisible: d.contactVisible ?? false,
-          contactEmail: d.contactEmail ?? '',
-          createdAt: d.createdAt?.toDate?.()?.toISOString() ?? '',
-        });
-      } catch (err) {
-        console.error('[post-detail] fetch error:', err);
-        setError('Failed to load this opportunity.');
+          type: data.type,
+          title: data.title,
+          description: data.description,
+          skillTags: data.skillTags ?? [],
+          compensation: data.compensation,
+          commitment: data.commitment,
+          equity: data.equity,
+          targetIntro: data.targetIntro,
+          posterName: data.posterName,
+          posterCohort: data.posterCohort,
+          posterUid: data.posterUid,
+          contactVisible: data.contactVisible ?? false,
+          contactEmail: data.contactEmail ?? '',
+          createdAt: data.createdAt?.toDate?.()?.toISOString() ?? '',
+        };
+        setPost(nextPost);
+
+        if (nextPost.posterUid) {
+          try {
+            const posterSnap = await getDoc(doc(db, 'users', nextPost.posterUid));
+            const posterData = posterSnap.data();
+            setPosterContact({
+              fullName: posterData?.fullName ?? nextPost.posterName,
+              email: posterData?.email ?? nextPost.contactEmail,
+              phone: posterData?.phone ?? '',
+              linkedinUrl: posterData?.linkedinUrl ?? '',
+            });
+          } catch (posterError) {
+            console.error('[post-detail] poster fetch error:', posterError);
+            setPosterContact({
+              fullName: nextPost.posterName,
+              email: nextPost.contactEmail,
+              phone: '',
+              linkedinUrl: '',
+            });
+          }
+        }
+      } catch (fetchError) {
+        console.error('[post-detail] fetch error:', fetchError);
+        setError('This opportunity is no longer available.');
       } finally {
         setLoading(false);
       }
     }
-    if (postId) fetchPost();
+
+    if (postId) {
+      fetchPost();
+    }
   }, [postId]);
 
-  const logConnection = async (action: 'reveal' | 'message') => {
-    if (!user || !post || !userProfile) return;
+  const logConnection = async (action: 'reveal' | 'message'): Promise<boolean> => {
+    if (!user || !post) return false;
+
     setConnecting(true);
     try {
-      await fetch('/api/connect', {
+      const headers = await getAuthorizedHeaders({ 'Content-Type': 'application/json' });
+      const response = await fetch('/api/connect', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
-          viewerUid: user.uid,
-          viewerEmail: user.email ?? '',
-          viewerCohort: userProfile.cohort ?? '',
-          posterUid: post.posterUid,
-          posterCohort: post.posterCohort,
           postId: post.id,
-          postType: post.type,
           action,
         }),
       });
+
+      if (!response.ok && response.status !== 409) {
+        throw new Error('Failed to log connection');
+      }
+
       setConnected(true);
-    } catch (err) {
-      console.error('[post-detail] connection log error:', err);
+      return true;
+    } catch (connectionError) {
+      console.error('[post-detail] connection log error:', connectionError);
+      return false;
     } finally {
       setConnecting(false);
     }
@@ -136,35 +168,47 @@ export default function PostDetailPage() {
 
   const handleReveal = async () => {
     if (connected) return;
-    await logConnection('reveal');
-    setContactRevealed(true);
+    const logged = await logConnection('reveal');
+    if (logged) {
+      setContactRevealed(true);
+    }
   };
 
   const handleCopyEmail = () => {
-    if (!post?.contactEmail) return;
-    navigator.clipboard.writeText(post.contactEmail).then(() => {
+    const email = posterContact?.email ?? post?.contactEmail ?? '';
+    if (!email) return;
+
+    navigator.clipboard.writeText(email).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
   };
 
   const isOwnPost = user?.uid === post?.posterUid;
+  const contact = posterContact ?? (post
+    ? {
+        fullName: post.posterName,
+        email: post.contactEmail,
+        phone: '',
+        linkedinUrl: '',
+      }
+    : null);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-brand-black flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-brand-neon animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-brand-black">
+        <Loader2 className="h-6 w-6 animate-spin text-brand-neon" />
       </div>
     );
   }
 
   if (error || !post) {
     return (
-      <div className="min-h-screen bg-brand-black flex items-center justify-center px-6">
+      <div className="flex min-h-screen items-center justify-center bg-brand-black px-6">
         <div className="text-center">
-          <p className="text-brand-muted mb-4">{error || 'Opportunity not found.'}</p>
-          <button onClick={() => router.push('/app/feed')} className="text-brand-neon font-mono text-sm hover:underline">
-            ← Back to feed
+          <p className="mb-4 text-brand-muted">{error || 'This opportunity is no longer available.'}</p>
+          <button onClick={() => router.push('/app/feed')} className="text-sm font-mono text-brand-neon hover:underline">
+            Back to feed
           </button>
         </div>
       </div>
@@ -173,43 +217,33 @@ export default function PostDetailPage() {
 
   return (
     <div className="min-h-screen bg-brand-black">
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-black/90 backdrop-blur border-b border-brand-border">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center gap-4">
+      <header className="sticky top-0 z-30 border-b border-brand-border bg-black/90 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-3xl items-center gap-4 px-6">
           <button
             onClick={() => router.push('/app/feed')}
-            className="min-h-[44px] min-w-[44px] flex items-center text-brand-muted hover:text-brand-white transition-colors"
+            className="flex min-h-[44px] min-w-[44px] items-center text-brand-muted transition-colors hover:text-brand-white"
             aria-label="Back to feed"
           >
             <ArrowLeft size={18} />
           </button>
-          <span className="text-[11px] font-mono tracking-[0.2em] text-brand-neon uppercase">
-            100x Civilization
-          </span>
+          <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-brand-neon">100x Civilization</span>
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-6 py-10">
-        <motion.article
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          {/* Type badge */}
-          <div className="flex items-center gap-3 mb-6">
-            <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 border border-brand-neon/30 bg-brand-neon/10 text-brand-neon">
+      <main className="mx-auto max-w-3xl px-6 py-10">
+        <motion.article initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+          <div className="mb-6 flex items-center gap-3">
+            <span className="border border-brand-neon/30 bg-brand-neon/10 px-2.5 py-1 text-[10px] uppercase tracking-wider text-brand-neon font-mono">
               {TYPE_LABELS[post.type] ?? post.type}
             </span>
           </div>
 
-          {/* Title */}
-          <h1 className="text-2xl md:text-4xl font-display font-medium text-brand-white mb-4 leading-tight">
+          <h1 className="mb-4 text-2xl font-display font-medium leading-tight text-brand-white md:text-4xl">
             {post.title}
           </h1>
 
-          {/* Poster */}
-          <div className="flex items-center gap-3 mb-8 pb-8 border-b border-brand-border">
-            <div className="w-8 h-8 rounded-full bg-brand-neon/20 flex items-center justify-center text-brand-neon text-xs font-bold">
+          <div className="mb-8 flex items-center gap-3 border-b border-brand-border pb-8">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-neon/20 text-xs font-bold text-brand-neon">
               {post.posterName.charAt(0).toUpperCase()}
             </div>
             <div>
@@ -218,84 +252,83 @@ export default function PostDetailPage() {
             </div>
           </div>
 
-          {/* Description */}
           <section className="mb-8">
-            <h2 className="text-[10px] font-mono uppercase tracking-wider text-brand-muted mb-3">Description</h2>
-            <p className="text-brand-white/80 leading-relaxed whitespace-pre-wrap">{post.description}</p>
+            <h2 className="mb-3 text-[10px] font-mono uppercase tracking-wider text-brand-muted">Description</h2>
+            <p className="whitespace-pre-wrap leading-relaxed text-brand-white/80">{post.description}</p>
           </section>
 
-          {/* Conditional fields */}
-          {(post.compensation || post.commitment || post.equity || post.targetIntro) && (
-            <section className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {post.compensation && <DetailField label="Compensation / Budget" value={post.compensation} />}
-              {post.commitment && <DetailField label="Commitment" value={post.commitment} />}
-              {post.equity && <DetailField label="Equity" value={post.equity} />}
-              {post.targetIntro && <DetailField label="Intro Target" value={post.targetIntro} />}
+          {(post.compensation || post.commitment || post.equity || post.targetIntro) ? (
+            <section className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2">
+              {post.compensation ? <DetailField label="Compensation / Budget" value={post.compensation} /> : null}
+              {post.commitment ? <DetailField label="Commitment" value={post.commitment} /> : null}
+              {post.equity ? <DetailField label="Equity" value={post.equity} /> : null}
+              {post.targetIntro ? <DetailField label="Intro Target" value={post.targetIntro} /> : null}
             </section>
-          )}
+          ) : null}
 
-          {/* Skill tags */}
-          {post.skillTags.length > 0 && (
+          {post.skillTags.length > 0 ? (
             <section className="mb-8">
-              <h2 className="text-[10px] font-mono uppercase tracking-wider text-brand-muted mb-3">Skills Sought</h2>
+              <h2 className="mb-3 text-[10px] font-mono uppercase tracking-wider text-brand-muted">Skills sought</h2>
               <div className="flex flex-wrap gap-2">
                 {post.skillTags.map((tag) => (
-                  <span key={tag} className="text-xs font-mono text-brand-white/60 bg-white/5 border border-brand-border px-3 py-1">
+                  <span key={tag} className="border border-brand-border bg-white/5 px-3 py-1 text-xs font-mono text-brand-white/60">
                     {skillLabel(tag)}
                   </span>
                 ))}
               </div>
             </section>
-          )}
+          ) : null}
 
-          {/* Connect / Reveal */}
-          {!isOwnPost && (
-            <section className="mt-10 pt-8 border-t border-brand-border">
+          {!isOwnPost ? (
+            <section className="mt-10 border-t border-brand-border pt-8">
               {!contactRevealed && !connected ? (
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row">
                   {post.contactVisible ? (
                     <button
                       id="reveal-contact-btn"
                       onClick={handleReveal}
                       disabled={connecting}
-                      className="flex items-center gap-2 bg-brand-neon text-brand-black font-semibold px-6 py-3 hover:bg-[#FF6A26] transition-colors disabled:opacity-60"
+                      className="flex items-center gap-2 bg-brand-neon px-6 py-3 font-semibold text-brand-black transition-colors hover:bg-[#FF6A26] disabled:opacity-60"
                     >
                       {connecting ? <Loader2 size={16} className="animate-spin" /> : <Mail size={16} />}
                       Reveal Contact Info
                     </button>
                   ) : (
-                    <p className="text-sm text-brand-muted italic">
-                      Contact info not shared publicly for this opportunity.
-                    </p>
+                    <p className="text-sm italic text-brand-muted">Contact info not shared publicly for this opportunity.</p>
                   )}
                 </div>
               ) : (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-5 border border-brand-neon/30 bg-brand-neon/5"
-                >
-                  <p className="text-[10px] font-mono uppercase tracking-wider text-brand-muted mb-2">Contact</p>
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-brand-white">{post.contactEmail}</span>
-                    <button
-                      onClick={handleCopyEmail}
-                      className="min-h-[44px] min-w-[44px] flex items-center justify-center text-brand-muted hover:text-brand-neon transition-colors"
-                      aria-label="Copy email"
-                    >
-                      {copied ? <Check size={14} className="text-brand-neon" /> : <Copy size={14} />}
-                    </button>
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="border border-brand-neon/30 bg-brand-neon/5 p-5">
+                  <p className="mb-2 text-[10px] font-mono uppercase tracking-wider text-brand-muted">Contact this member directly</p>
+                  <p className="mb-4 text-sm text-brand-muted">Reach out externally — there is no in-platform messaging.</p>
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <DetailField label="Full name" value={contact?.fullName ?? post.posterName} />
+                    <DetailField
+                      label="Email"
+                      value={contact?.email ?? post.contactEmail ?? ''}
+                      action={
+                        <button
+                          onClick={handleCopyEmail}
+                          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-brand-muted transition-colors hover:text-brand-neon"
+                          aria-label="Copy email"
+                        >
+                          {copied ? <Check size={14} className="text-brand-neon" /> : <Copy size={14} />}
+                        </button>
+                      }
+                    />
+                    {contact?.phone ? <DetailField label="Phone number" value={contact.phone} /> : null}
+                    {contact?.linkedinUrl ? <DetailField label="LinkedIn URL" value={contact.linkedinUrl} /> : null}
                   </div>
-                  <p className="text-[11px] font-mono text-brand-muted mt-2">Connection logged. Good luck.</p>
+
+                  <p className="mt-4 text-[11px] font-mono text-brand-muted">
+                    Connection logged. Good luck.
+                  </p>
                 </motion.div>
               )}
             </section>
-          )}
-
-          {isOwnPost && (
-            <p className="text-sm font-mono text-brand-muted mt-8 pt-8 border-t border-brand-border">
-              This is your post.
-            </p>
+          ) : (
+            <p className="mt-8 border-t border-brand-border pt-8 text-sm font-mono text-brand-muted">This is your post.</p>
           )}
         </motion.article>
       </main>
@@ -303,11 +336,22 @@ export default function PostDetailPage() {
   );
 }
 
-function DetailField({ label, value }: { label: string; value: string }) {
+function DetailField({
+  label,
+  value,
+  action,
+}: {
+  label: string;
+  value: string;
+  action?: ReactNode;
+}) {
   return (
-    <div className="flex flex-col gap-1 p-4 border border-brand-border">
-      <span className="text-[10px] font-mono uppercase tracking-wider text-brand-muted">{label}</span>
-      <span className="text-sm text-brand-white">{value}</span>
+    <div className="flex flex-col gap-1 border border-brand-border p-4">
+      <div className="flex items-start justify-between gap-3">
+        <span className="text-[10px] font-mono uppercase tracking-wider text-brand-muted">{label}</span>
+        {action}
+      </div>
+      <span className="break-words text-sm text-brand-white">{value || '—'}</span>
     </div>
   );
 }

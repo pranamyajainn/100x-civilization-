@@ -11,6 +11,7 @@ export interface PostData {
   title: string;
   description: string;
   skillTags: string[];
+  embedding?: number[] | null;
   posterName: string;
   posterCohort: string;
   posterUid: string;

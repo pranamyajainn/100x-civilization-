@@ -29,3 +29,12 @@ You have successfully connected this project to a Google Cloud Firebase backend 
 1. In the Firebase Console, navigate to the **Firestore Database**.
 2. Go to the "Data" tab.
 3. You will see a collection named `waitlist_signups` populated with cohort members requesting access.
+
+### 6. Firestore Indexes for Production
+
+Create these composite indexes before deploying the duplicate-detection flow:
+
+- `connections` on `(postId ASC, emailDomain ASC, timestamp ASC)`
+- `connections` on `(postId ASC, deviceFingerprint ASC)`
+
+These are required before the production duplicate check runs in Firebase Console.

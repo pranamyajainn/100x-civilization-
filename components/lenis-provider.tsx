@@ -1,25 +1,28 @@
 'use client';
-import { ReactNode, useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
 
-const ReactLenis = dynamic(() => import('lenis/react').then(mod => mod.ReactLenis), { ssr: false });
+import { ReactNode, useEffect } from 'react';
 
 export function LenisProvider({ children }: { children: ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-  
   useEffect(() => {
-    // Defer mounting Lenis slightly to ensure it doesn't block main thread during hydration
-    const timer = setTimeout(() => setMounted(true), 500);
-    return () => clearTimeout(timer);
+    let isCancelled = false;
+    let lenisInstance: { destroy: () => void } | null = null;
+
+    void import('lenis').then(({ default: Lenis }) => {
+      if (isCancelled) return;
+
+      lenisInstance = new Lenis({
+        autoRaf: true,
+        lerp: 0.1,
+        duration: 1.5,
+        smoothWheel: true,
+      });
+    });
+
+    return () => {
+      isCancelled = true;
+      lenisInstance?.destroy();
+    };
   }, []);
 
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
-  return (
-    <ReactLenis root options={{ lerp: 0.1, duration: 1.5, smoothWheel: true }}>
-      {children}
-    </ReactLenis>
-  );
+  return <>{children}</>;
 }

@@ -21,10 +21,11 @@ export function FinalCTA() {
       />
       <ScrollReveal className="relative z-10 flex flex-col items-center gap-6">
         <h2 className="text-4xl md:text-6xl font-display font-medium text-brand-white leading-tight">
-          Seven cohorts.<br className="hidden sm:block" /> One economy.
+          The people you need are already here.
         </h2>
-        <p className="text-lg md:text-xl text-brand-muted font-mono tracking-wide mb-4">
-          The platform is live. Invite-only.
+        <p className="text-lg md:text-xl text-brand-muted font-mono tracking-wide mb-4 max-w-2xl">
+          <span className="block">Stop posting on LinkedIn for collaborators</span>
+          <span className="block">who are already inside the community.</span>
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <Link
@@ -32,12 +33,6 @@ export function FinalCTA() {
             className="bg-brand-neon text-brand-black font-bold uppercase tracking-widest px-8 py-4 hover:bg-[#FF6A26] transition-colors"
           >
             Join 100x Civilization
-          </Link>
-          <Link
-            href="/invite"
-            className="border border-brand-white/20 text-brand-white font-semibold px-8 py-4 hover:bg-brand-white/5 transition-colors"
-          >
-            Sign In
           </Link>
         </div>
       </ScrollReveal>

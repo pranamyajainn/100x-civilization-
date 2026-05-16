@@ -17,10 +17,12 @@ export function Cursor() {
   useEffect(() => {
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    
+
     if (isTouchDevice || prefersReducedMotion) return;
-    
-    setTimeout(() => setIsVisible(true), 0);
+
+    const showCursorFrame = window.requestAnimationFrame(() => {
+      setIsVisible(true);
+    });
 
     const moveCursor = (e: MouseEvent) => {
       cursorX.set(e.clientX - 16);
@@ -40,6 +42,7 @@ export function Cursor() {
     window.addEventListener('mouseover', handleMouseOver);
 
     return () => {
+      window.cancelAnimationFrame(showCursorFrame);
       window.removeEventListener('mousemove', moveCursor);
       window.removeEventListener('mouseover', handleMouseOver);
     };

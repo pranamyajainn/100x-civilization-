@@ -1,60 +1,59 @@
 'use client';
 
-/**
- * /invite — Direct sign-in entry point for 100x Civilization.
- *
- * This page is the primary auth entry for all users:
- * - No invite token required
- * - Triggers Google OAuth directly
- * - On success: checks Firestore users/{uid}.onboardingComplete
- *   → true:  redirect to /app/feed
- *   → false: redirect to /app/onboarding
- *
- * Alumni who arrive via /invite/[token] (email invite links) continue
- * to use the token flow. This page is the "Sign In" entry for everyone else.
- */
-
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { signInWithPopup } from 'firebase/auth';
+import { browserPopupRedirectResolver, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { auth, db, googleProvider } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
+import { auth, db } from '@/lib/firebase';
+import { clearSessionCookies, setSessionCookies } from '@/lib/client-session';
 import { motion } from 'motion/react';
-import { Loader2 } from 'lucide-react';
 
 export default function InviteSignInPage() {
   const router = useRouter();
-  const [signingIn, setSigningIn] = useState(false);
   const [error, setError] = useState('');
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
-  const handleSignIn = async () => {
-    setSigningIn(true);
+  async function handleGoogleSignIn() {
     setError('');
+    setIsSigningIn(true);
+
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
+      const provider = new GoogleAuthProvider();
+      provider.addScope('email');
+      provider.addScope('profile');
 
-      // Set session cookie
-      document.cookie = 'fb_session=1; path=/; max-age=86400; SameSite=Lax';
+      const result = await signInWithPopup(
+        auth,
+        provider,
+        browserPopupRedirectResolver
+      );
+      setSessionCookies(result.user.uid);
 
-      // Check onboarding status
-      const userSnap = await getDoc(doc(db, 'users', user.uid));
-      if (userSnap.exists() && userSnap.data().onboardingComplete) {
-        document.cookie = 'ob_complete=1; path=/; max-age=86400; SameSite=Lax';
+      const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+      if (userDoc.exists() && userDoc.data()?.status === 'approved') {
         router.push('/app/feed');
       } else {
         router.push('/app/onboarding');
       }
-    } catch (err: any) {
-      console.error('[invite] sign-in error:', err);
-      if (err.code === 'auth/popup-closed-by-user') {
-        setError('Sign-in cancelled. Try again.');
-      } else {
-        setError(err.message ?? 'Sign-in failed. Please try again.');
+    } catch (err) {
+      const code = typeof err === 'object' && err && 'code' in err
+        ? String(err.code)
+        : '';
+
+      if (
+        code !== 'auth/popup-closed-by-user' &&
+        code !== 'auth/cancelled-popup-request'
+      ) {
+        clearSessionCookies();
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Sign-in failed. Please try again.'
+        );
       }
-      setSigningIn(false);
+      setIsSigningIn(false);
     }
-  };
+  }
 
   return (
     <main className="min-h-screen bg-brand-black flex items-center justify-center px-6">
@@ -80,7 +79,7 @@ export default function InviteSignInPage() {
           Sign in to 100x Civilization
         </h1>
         <p className="text-brand-muted text-sm mb-8 leading-relaxed">
-          For 100xEngineers alumni only. No password required.
+          Sign in with Google, complete onboarding, and wait for approval.
         </p>
 
         {error && (
@@ -89,25 +88,21 @@ export default function InviteSignInPage() {
           </div>
         )}
 
-        <button
-          id="direct-google-signin"
-          onClick={handleSignIn}
-          disabled={signingIn}
-          className="w-full flex items-center justify-center gap-3 bg-white text-black font-semibold py-4 hover:bg-gray-100 transition-colors disabled:opacity-60"
-        >
-          {signingIn ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <>
-              <GoogleIcon />
-              Continue with Google
-            </>
-          )}
-        </button>
+        <div className="w-full flex justify-center">
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={isSigningIn}
+            className="w-full flex items-center justify-center gap-3 border border-brand-white/20 bg-brand-white text-brand-black px-5 py-3 text-sm font-medium transition hover:bg-brand-neon disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <GoogleIcon />
+            {isSigningIn ? 'Opening Google...' : 'Continue with Google'}
+          </button>
+        </div>
 
         <p className="mt-6 text-[10px] font-mono text-brand-muted text-center leading-relaxed">
-          This platform is invite-only for 100xEngineers alumni (cohorts 1–7+).<br />
-          Not an alumnus? This platform is not for you.
+          For 100xEngineers alumni only.<br />
+          Access is enabled after admin approval.
         </p>
       </motion.div>
     </main>

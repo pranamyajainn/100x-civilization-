@@ -33,6 +33,7 @@ export interface UserProfile {
   email: string;
   fullName: string;
   cohort: string;
+  currentRole?: string;
   skillTags: string[];
   embedding: number[] | null;
   notificationsEnabled: boolean;
@@ -101,10 +102,18 @@ export function rankMatches(
     .slice(0, topN);
 }
 
+export function scoreFeedRelevance(post: PostDoc, user: Pick<UserProfile, "skillTags" | "embedding">): number {
+  if (post.embedding && post.embedding.length > 0 && user.embedding && user.embedding.length > 0) {
+    return cosineSimilarity(post.embedding, user.embedding);
+  }
+
+  return keywordOverlapScore(post.skillTags ?? [], user.skillTags);
+}
+
 /**
  * Keyword overlap fallback: Jaccard-like score of matching skill tags.
  */
-function keywordOverlapScore(
+export function keywordOverlapScore(
   postTags: string[],
   userTags: string[]
 ): number {

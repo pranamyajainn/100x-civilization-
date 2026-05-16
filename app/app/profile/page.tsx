@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
+import { getAuthorizedHeaders } from '@/lib/client-session';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { SkillTagInput } from '@/components/skill-tag-input';
 import { motion } from 'motion/react';
@@ -36,6 +37,7 @@ interface Profile {
   contactVisible: boolean;
   notificationsEnabled: boolean;
   consentGiven: boolean;
+  embedding: number[];
 }
 
 export default function ProfilePage() {
@@ -64,6 +66,7 @@ export default function ProfilePage() {
           contactVisible: d.contactVisible ?? true,
           notificationsEnabled: d.notificationsEnabled ?? true,
           consentGiven: d.consentGiven ?? true,
+          embedding: Array.isArray(d.embedding) ? d.embedding : [],
         });
       }
     });
@@ -87,10 +90,20 @@ export default function ProfilePage() {
       // Regenerate embedding
       let embedding: number[] = [];
       try {
+        const headers = await getAuthorizedHeaders({ 'Content-Type': 'application/json' });
         const embedRes = await fetch('/api/embed', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: form.skillTags.join(' ') }),
+          headers,
+          body: JSON.stringify({
+            text: [
+              form.fullName,
+              form.currentRole ? `currentRole: ${form.currentRole}` : '',
+              `cohort ${form.cohort}`,
+              `skills: ${form.skillTags.join(', ')}`,
+            ]
+              .filter(Boolean)
+              .join('\n'),
+          }),
         });
         if (embedRes.ok) {
           const { embedding: emb } = await embedRes.json();
@@ -109,6 +122,9 @@ export default function ProfilePage() {
       if (embedding.length > 0) update.embedding = embedding;
 
       await updateDoc(doc(db, 'users', user.uid), update);
+      if (embedding.length > 0) {
+        setForm((current) => current ? { ...current, embedding } : current);
+      }
       setStatus('saved');
       setTimeout(() => setStatus('idle'), 2500);
     } catch (err: any) {
@@ -160,6 +176,12 @@ export default function ProfilePage() {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
           <h1 className="text-3xl font-display font-medium text-brand-white mb-1">{form.fullName}</h1>
           <p className="text-sm text-brand-muted mb-8">{form.cohort} · {form.currentRole}</p>
+
+          {form.embedding.length === 0 ? (
+            <div className="p-3 border border-brand-border bg-black/40 text-sm text-brand-muted mb-5">
+              Your matching profile is being built. Check back in a few minutes.
+            </div>
+          ) : null}
 
           {errorMsg && <div className="p-3 border border-red-500/40 bg-red-500/10 text-red-400 text-sm mb-5">{errorMsg}</div>}
           {status === 'saved' && <div className="p-3 border border-green-500/40 bg-green-500/10 text-green-400 text-sm mb-5">Profile saved.</div>}

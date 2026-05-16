@@ -38,37 +38,11 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createHash } from "crypto";
-import firebaseConfig from "@/firebase-applet-config.json";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { verifyIdToken } from "@/lib/auth-middleware";
+import { adminDb } from "@/lib/firebase-admin";
 
 export const runtime = "nodejs";
-
-const PROJECT = firebaseConfig.projectId;
-const DB_ID = firebaseConfig.firestoreDatabaseId;
-const API_KEY = firebaseConfig.apiKey;
-const BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/${DB_ID}/documents`;
-
-/** Helper: Firestore REST PATCH (upsert) */
-async function firestorePatch(collection: string, docId: string, fields: Record<string, any>) {
-  const url = `${BASE}/${collection}/${docId}?key=${API_KEY}`;
-  return fetch(url, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fields }),
-  });
-}
-
-/** Helper: Firestore REST runQuery (structured query) */
-async function firestoreQuery(structuredQuery: object): Promise<any[]> {
-  const url = `${BASE}:runQuery?key=${API_KEY}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ structuredQuery }),
-  });
-  if (!res.ok) return [];
-  const rows: any[] = await res.json();
-  return rows.filter((r) => r.document);
-}
 
 /** Build SHA-256 device fingerprint from User-Agent + IP */
 async function buildFingerprint(req: NextRequest): Promise<string> {
@@ -84,131 +58,120 @@ function emailDomain(email: string): string {
   return parts.length === 2 ? parts[1].toLowerCase() : "";
 }
 
-/** Check duplicate: same postId + emailDomain in last 24h OR same fingerprint + postId */
 async function isDuplicate(postId: string, emailDom: string, fingerprint: string): Promise<boolean> {
-  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  const snapshot = await adminDb
+    .collection("connections")
+    .where("postId", "==", postId)
+    .get();
 
-  // Check 1: same postId + emailDomain within 24h
-  const domainMatches = await firestoreQuery({
-    from: [{ collectionId: "connections" }],
-    where: {
-      compositeFilter: {
-        op: "AND",
-        filters: [
-          { fieldFilter: { field: { fieldPath: "postId" }, op: "EQUAL", value: { stringValue: postId } } },
-          { fieldFilter: { field: { fieldPath: "emailDomain" }, op: "EQUAL", value: { stringValue: emailDom } } },
-          { fieldFilter: { field: { fieldPath: "timestamp" }, op: "GREATER_THAN_OR_EQUAL", value: { timestampValue: cutoff } } },
-        ],
-      },
-    },
-    limit: 1,
-  });
-  if (domainMatches.length > 0) return true;
+  for (const doc of snapshot.docs) {
+    const connection = doc.data();
+    const timestampValue = connection.timestamp;
+    const timestamp =
+      timestampValue instanceof Timestamp
+        ? timestampValue.toMillis()
+        : new Date(timestampValue ?? 0).getTime();
 
-  // Check 2: same fingerprint + postId (any time)
-  const fpMatches = await firestoreQuery({
-    from: [{ collectionId: "connections" }],
-    where: {
-      compositeFilter: {
-        op: "AND",
-        filters: [
-          { fieldFilter: { field: { fieldPath: "postId" }, op: "EQUAL", value: { stringValue: postId } } },
-          { fieldFilter: { field: { fieldPath: "deviceFingerprint" }, op: "EQUAL", value: { stringValue: fingerprint } } },
-        ],
-      },
-    },
-    limit: 1,
-  });
-  return fpMatches.length > 0;
+    if (connection.deviceFingerprint === fingerprint) {
+      return true;
+    }
+
+    if (
+      emailDom &&
+      connection.emailDomain === emailDom &&
+      Number.isFinite(timestamp) &&
+      timestamp >= cutoff
+    ) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
-/** Find the notification document sent to viewerUid for this postId and mark it replied */
 async function markNotificationReplied(viewerUid: string, postId: string): Promise<void> {
   try {
-    const matches = await firestoreQuery({
-      from: [{ collectionId: "notifications" }],
-      where: {
-        compositeFilter: {
-          op: "AND",
-          filters: [
-            { fieldFilter: { field: { fieldPath: "uid" }, op: "EQUAL", value: { stringValue: viewerUid } } },
-            { fieldFilter: { field: { fieldPath: "postId" }, op: "EQUAL", value: { stringValue: postId } } },
-          ],
-        },
+    await adminDb.collection("notifications").doc(`${viewerUid}_${postId}`).set(
+      {
+        replied: true,
+        repliedAt: FieldValue.serverTimestamp(),
       },
-      limit: 1,
-    });
-
-    if (matches.length > 0) {
-      // Extract docId from the resource name: .../notifications/{docId}
-      const name: string = matches[0].document.name;
-      const docId = name.split("/").pop()!;
-      await firestorePatch("notifications", docId, {
-        replied: { booleanValue: true },
-        repliedAt: { timestampValue: new Date().toISOString() },
-      });
-    }
+      { merge: true }
+    );
   } catch (err) {
-    // Non-fatal — don't block the connection response
     console.error("[connect] markNotificationReplied error:", err);
   }
 }
 
 export async function POST(req: NextRequest) {
+  const authUser = await verifyIdToken(req);
+  if (!authUser) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
-    const { viewerUid, viewerCohort, posterUid, posterCohort, postId, postType, action } = body;
+    const postId = typeof body.postId === "string" ? body.postId : "";
+    const action = body.action === "message" ? "message" : "reveal";
 
-    if (!viewerUid || !posterUid || !postId || !action) {
+    if (!postId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    if (viewerUid === posterUid) {
+    const [viewerDoc, postDoc] = await Promise.all([
+      adminDb.collection("users").doc(authUser.uid).get(),
+      adminDb.collection("posts").doc(postId).get(),
+    ]);
+
+    if (!viewerDoc.exists) {
+      return NextResponse.json({ error: "Viewer not found" }, { status: 404 });
+    }
+
+    if (!postDoc.exists) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    const viewer = viewerDoc.data() ?? {};
+    const post = postDoc.data() ?? {};
+    const posterUid = post.authorUid ?? post.posterUid;
+
+    if (!posterUid) {
+      return NextResponse.json({ error: "Post owner missing" }, { status: 400 });
+    }
+
+    if (authUser.uid === posterUid) {
       return NextResponse.json({ error: "Cannot connect with yourself" }, { status: 400 });
     }
 
-    // Build fingerprint and extract email domain
     const fingerprint = await buildFingerprint(req);
+    const emailDom = emailDomain(authUser.email);
 
-    // We don't have viewerEmail in the body — derive domain from viewerUid lookup or
-    // accept it from the body. For security, accept from body (client sends their own email).
-    const viewerEmail: string = body.viewerEmail ?? "";
-    const emailDom = emailDomain(viewerEmail);
-
-    // Duplicate check
     const duplicate = await isDuplicate(postId, emailDom, fingerprint);
     if (duplicate) {
       return NextResponse.json({ duplicate: true }, { status: 409 });
     }
 
-    const connectionId = `${viewerUid}_${postId}_${action}`;
-    const isCrossCohort = viewerCohort !== posterCohort;
-    const timestamp = new Date().toISOString();
+    const connectionId = `${authUser.uid}_${postId}_${action}`;
+    const viewerCohort = viewer.cohort ?? "";
+    const posterCohort = post.posterCohort ?? "";
 
-    // Write connection document
-    const writeRes = await firestorePatch("connections", connectionId, {
-      viewerUid: { stringValue: viewerUid },
-      viewerCohort: { stringValue: viewerCohort ?? "" },
-      posterUid: { stringValue: posterUid },
-      posterCohort: { stringValue: posterCohort ?? "" },
-      postId: { stringValue: postId },
-      postType: { stringValue: postType ?? "" },
-      actionType: { stringValue: action },
-      isCrossCohort: { booleanValue: isCrossCohort },
-      emailDomain: { stringValue: emailDom },
-      deviceFingerprint: { stringValue: fingerprint },
-      timestamp: { timestampValue: timestamp },
-      isSeedData: { booleanValue: false },
+    await adminDb.collection("connections").doc(connectionId).set({
+      viewerUid: authUser.uid,
+      viewerCohort,
+      posterUid,
+      posterCohort,
+      postId,
+      postType: post.type ?? "",
+      actionType: action,
+      isCrossCohort: viewerCohort !== posterCohort,
+      emailDomain: emailDom,
+      deviceFingerprint: fingerprint,
+      timestamp: FieldValue.serverTimestamp(),
+      isSeedData: false,
     });
 
-    if (!writeRes.ok) {
-      const err = await writeRes.text();
-      console.error("[connect] Firestore write error:", err);
-      return NextResponse.json({ error: "Failed to log connection" }, { status: 502 });
-    }
-
-    // Fire-and-forget: mark notification as replied
-    markNotificationReplied(viewerUid, postId);
+    markNotificationReplied(authUser.uid, postId);
 
     return NextResponse.json({ connectionId });
   } catch (err) {

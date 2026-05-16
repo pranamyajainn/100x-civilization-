@@ -1,14 +1,19 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  // Disabled during testing — re-enable before production deploy
-  reactStrictMode: false,
-  eslint: {
-    ignoreDuringBuilds: true,
+  reactStrictMode: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
   },
   typescript: {
     ignoreBuildErrors: false,
   },
+  serverExternalPackages: [
+    'firebase-admin',
+    'firebase-admin/app',
+    'firebase-admin/auth',
+    'firebase-admin/firestore',
+  ],
   // Allow access to remote image placeholder.
   images: {
     remotePatterns: [
@@ -18,28 +23,32 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**', // This allows any path under the hostname
       },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   async headers() {
+    const csp = [
+      "default-src 'self'",
+      `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'development' ? "'unsafe-eval' " : ''}https://apis.google.com https://accounts.google.com https://*.firebaseapp.com https://securetoken.googleapis.com`.trim(),
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "frame-src 'self' https://accounts.google.com https://apis.google.com https://*.firebaseapp.com https://securetoken.googleapis.com",
+      "img-src 'self' data: https://picsum.photos https://lh3.googleusercontent.com https://firebasestorage.googleapis.com",
+      "connect-src 'self' https://*.googleapis.com https://www.googleapis.com https://accounts.google.com https://*.firebaseio.com https://*.firebaseapp.com https://firebasestorage.googleapis.com",
+    ].join('; ');
+
     return [
-      {
-        source: '/_next/static/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable'
-          }
-        ]
-      },
-      {
-        source: '/fonts/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable'
-          }
-        ]
-      },
       {
         source: '/',
         headers: [
@@ -61,10 +70,6 @@ const nextConfig: NextConfig = {
             value: 'max-age=63072000; includeSubDomains; preload'
           },
           {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block'
-          },
-          {
             key: 'X-Frame-Options',
             value: 'SAMEORIGIN'
           },
@@ -74,11 +79,15 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin'
+            value: 'strict-origin-when-cross-origin'
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()'
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://fonts.googleapis.com https://fonts.gstatic.com https://firestore.googleapis.com https://*.firebaseio.com; img-src 'self' data: https://picsum.photos; connect-src 'self' https://*.googleapis.com;"
+            value: csp
           }
         ]
       }
