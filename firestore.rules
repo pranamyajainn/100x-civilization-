@@ -10,8 +10,8 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return signedIn() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      return request.auth != null &&
+        request.auth.token.email in ['pranamyajeet@gmail.com'];
     }
 
     function isApproved() {
@@ -115,7 +115,11 @@ service cloud.firestore {
     }
 
     match /notifications/{notificationId} {
-      allow get, list: if signedIn() && resource.data.uid == request.auth.uid;
+      allow get: if request.auth != null &&
+        (resource.data.uid == request.auth.uid ||
+         request.auth.token.email in ['pranamyajeet@gmail.com']);
+      allow list: if request.auth != null &&
+        request.auth.token.email in ['pranamyajeet@gmail.com'];
       allow create, update, delete: if isAdmin();
     }
 

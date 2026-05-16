@@ -19,6 +19,7 @@ interface FormState {
   email: string;
   phone: string;
   cohort: string;
+  currentRole: string;
   linkedinUrl: string;
   skillTags: string[];
 }
@@ -28,6 +29,7 @@ const INITIAL_FORM: FormState = {
   email: '',
   phone: '',
   cohort: '',
+  currentRole: '',
   linkedinUrl: '',
   skillTags: [],
 };
@@ -59,6 +61,7 @@ export default function OnboardingPage() {
         email: currentUser.email ?? '',
         phone: '',
         cohort: '',
+        currentRole: '',
         linkedinUrl: '',
         skillTags: [],
       });
@@ -80,6 +83,9 @@ export default function OnboardingPage() {
     if (!form.email.trim()) return 'Email is required.';
     if (phoneDigits.length < 10) return 'WhatsApp / Phone Number must contain at least 10 digits.';
     if (!form.cohort) return 'Please choose your cohort.';
+    const currentRole = form.currentRole.trim();
+    if (currentRole.length < 2) return 'Current role / profession must be at least 2 characters.';
+    if (currentRole.length > 100) return 'Current role / profession must be 100 characters or fewer.';
     if (!isValidLinkedInUrl(linkedinUrl)) return 'LinkedIn Profile URL must start with linkedin.com/in/.';
     if (form.skillTags.length < 5) {
       setTagError('Add at least 5 skill tags.');
@@ -131,6 +137,7 @@ export default function OnboardingPage() {
           email: form.email.trim(),
           phone: normalizedPhone,
           cohort: form.cohort,
+          currentRole: form.currentRole.trim(),
           linkedinUrl: normalizedLinkedInUrl,
           skillTags: form.skillTags,
           certificateUrl,
@@ -255,6 +262,18 @@ export default function OnboardingPage() {
                     ))}
                   </select>
                 </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-mono uppercase tracking-wider text-brand-muted">What do you do? (Current Role / Profession) *</label>
+                <input
+                  type="text"
+                  value={form.currentRole}
+                  onChange={(event) => handleFieldChange('currentRole', event.target.value)}
+                  placeholder="e.g. Founder, AI Engineer, Product Manager, Growth Marketer"
+                  className={inputClassName}
+                  maxLength={100}
+                />
               </div>
 
               <div className="flex flex-col gap-1.5">
