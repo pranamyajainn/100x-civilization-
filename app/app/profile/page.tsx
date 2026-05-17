@@ -48,26 +48,32 @@ export default function ProfilePage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [tagError, setTagError] = useState('');
   const [withdrawing, setWithdrawing] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
       if (!u) { router.push('/'); return; }
       setUser(u);
-      const snap = await getDoc(doc(db, 'users', u.uid));
-      if (snap.exists()) {
-        const d = snap.data();
-        setForm({
-          fullName: d.fullName ?? '',
-          cohort: d.cohort ?? '',
-          currentRole: d.currentRole ?? '',
-          skillTags: d.skillTags ?? [],
-          availability: d.availability ?? 'open',
-          contactEmail: d.contactEmail ?? u.email ?? '',
-          contactVisible: d.contactVisible ?? true,
-          notificationsEnabled: d.notificationsEnabled ?? true,
-          consentGiven: d.consentGiven ?? true,
-          embedding: Array.isArray(d.embedding) ? d.embedding : [],
-        });
+      try {
+        const snap = await getDoc(doc(db, 'users', u.uid));
+        if (snap.exists()) {
+          const d = snap.data();
+          setForm({
+            fullName: d.fullName ?? '',
+            cohort: d.cohort ?? '',
+            currentRole: d.currentRole ?? '',
+            skillTags: d.skillTags ?? [],
+            availability: d.availability ?? 'open',
+            contactEmail: d.contactEmail ?? u.email ?? '',
+            contactVisible: d.contactVisible ?? true,
+            notificationsEnabled: d.notificationsEnabled ?? true,
+            consentGiven: d.consentGiven ?? true,
+            embedding: Array.isArray(d.embedding) ? d.embedding : [],
+          });
+        }
+      } catch (err) {
+        console.error('[profile] failed to load:', err);
+        setLoadError('Failed to load your profile. Please refresh.');
       }
     });
     return unsub;
@@ -78,8 +84,8 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     if (!user || !form) return;
-    if (form.skillTags.length < 5) {
-      setTagError('Minimum 5 skill tags required');
+    if (form.skillTags.length < 3) {
+      setTagError('Minimum 3 skill tags required');
       return;
     }
     setTagError('');
@@ -156,7 +162,11 @@ export default function ProfilePage() {
   if (!form) {
     return (
       <div className="min-h-screen bg-brand-black flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-brand-neon animate-spin" />
+        {loadError ? (
+          <p className="text-sm text-brand-muted text-center px-6">{loadError}</p>
+        ) : (
+          <Loader2 className="w-6 h-6 text-brand-neon animate-spin" />
+        )}
       </div>
     );
   }
@@ -190,10 +200,10 @@ export default function ProfilePage() {
 
             {/* Skill tags */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-mono uppercase tracking-wider text-brand-muted">Skill Tags * (minimum 5)</label>
+              <label className="text-[10px] font-mono uppercase tracking-wider text-brand-muted">Skill Tags * (minimum 3)</label>
               <SkillTagInput
                 value={form.skillTags}
-                onChange={(tags) => { setField('skillTags', tags); if (tags.length >= 5) setTagError(''); }}
+                onChange={(tags) => { setField('skillTags', tags); if (tags.length >= 3) setTagError(''); }}
                 error={tagError}
               />
             </div>

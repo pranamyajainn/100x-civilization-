@@ -81,7 +81,7 @@ export default function OnboardingPage() {
 
     if (!isValidFullName(fullName)) return 'Full name must be at least 2 words and use letters and spaces only.';
     if (!form.email.trim()) return 'Email is required.';
-    if (phoneDigits.length < 10) return 'WhatsApp / Phone Number must contain at least 10 digits.';
+    if (phoneDigits.length < 7) return 'WhatsApp / Phone Number must contain at least 7 digits.';
     if (!form.cohort) return 'Please choose your cohort.';
     const currentRole = form.currentRole.trim();
     if (currentRole.length < 2) return 'Current role / profession must be at least 2 characters.';
@@ -121,7 +121,7 @@ export default function OnboardingPage() {
     setCertError('');
 
     try {
-      const normalizedPhone = form.phone.replace(/\D/g, '');
+      const normalizedPhone = form.phone;
       const normalizedLinkedInUrl = normalizeLinkedInUrl(form.linkedinUrl);
 
       const certificateUrl = certificateFile
@@ -237,9 +237,11 @@ export default function OnboardingPage() {
                   <input
                     type="text"
                     value={form.phone}
-                    onChange={(event) => handleFieldChange('phone', event.target.value.replace(/\D/g, ''))}
+                    onChange={(event) => {
+                      const cleaned = event.target.value.replace(/[^\d+]/g, '').replace(/(?!^)\+/g, '');
+                      handleFieldChange('phone', cleaned);
+                    }}
                     placeholder="+91 98765 43210"
-                    inputMode="numeric"
                     className={inputClassName}
                     maxLength={16}
                   />

@@ -30,6 +30,11 @@ export async function verifyIdToken(
 }
 
 export async function isAdminUser(uid: string): Promise<boolean> {
-  const userDoc = await adminDb.collection("users").doc(uid).get();
-  return Boolean(userDoc.data()?.isAdmin);
+  try {
+    const userDoc = await adminDb.collection("users").doc(uid).get();
+    return Boolean(userDoc.data()?.isAdmin);
+  } catch (err) {
+    console.error('[auth] isAdminUser check failed:', err);
+    return false;
+  }
 }
