@@ -77,7 +77,7 @@ export function PostCard({ post, onClick, index = 0 }: PostCardProps) {
       </div>
 
       {/* Title */}
-      <h3 className="text-[18px] font-display font-medium text-brand-white group-hover:text-brand-neon transition-colors leading-snug mb-2">
+      <h3 className="text-xl font-display font-medium text-brand-white group-hover:text-brand-neon transition-colors leading-snug mb-2">
         {post.title}
       </h3>
 

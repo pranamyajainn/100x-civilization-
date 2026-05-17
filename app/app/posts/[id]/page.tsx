@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { motion } from 'motion/react';
 import { ArrowLeft, Check, Copy, Loader2, Mail } from 'lucide-react';
@@ -58,6 +58,9 @@ export default function PostDetailPage() {
   const [contactRevealed, setContactRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
+  const [fillConfirm, setFillConfirm] = useState(false);
+  const [filling, setFilling] = useState(false);
+  const [filled, setFilled] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -184,6 +187,19 @@ export default function PostDetailPage() {
     });
   };
 
+  const handleMarkFilled = async () => {
+    setFilling(true);
+    try {
+      await updateDoc(doc(db, 'posts', postId), { status: 'closed' });
+      setFilled(true);
+      setFillConfirm(false);
+    } catch (fillError) {
+      console.error('[post-detail] fill error:', fillError);
+    } finally {
+      setFilling(false);
+    }
+  };
+
   const isOwnPost = user?.uid === post?.posterUid;
   const contact = posterContact ?? (post
     ? {
@@ -231,6 +247,7 @@ export default function PostDetailPage() {
       </header>
 
       <main className="mx-auto max-w-3xl px-6 py-10">
+        <div className="border-b border-white/6 mb-8" />
         <motion.article initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
           <div className="mb-6 flex items-center gap-3">
             <span className="border border-brand-neon/30 bg-brand-neon/10 px-2.5 py-1 text-[10px] uppercase tracking-wider text-brand-neon font-mono">
@@ -238,7 +255,7 @@ export default function PostDetailPage() {
             </span>
           </div>
 
-          <h1 className="mb-4 text-2xl font-display font-medium leading-tight text-brand-white md:text-4xl">
+          <h1 className="mb-4 font-display text-4xl md:text-5xl font-medium leading-tight tracking-tight text-brand-white">
             {post.title}
           </h1>
 
@@ -328,7 +345,38 @@ export default function PostDetailPage() {
               )}
             </section>
           ) : (
-            <p className="mt-8 border-t border-brand-border pt-8 text-sm font-mono text-brand-muted">This is your post.</p>
+            <section className="mt-8 border-t border-brand-border pt-8">
+              <p className="mb-4 text-sm font-mono text-brand-muted">This is your post.</p>
+              {filled ? (
+                <span className="font-mono text-xs tracking-widest text-brand-muted">FILLED · REMOVED FROM FEED</span>
+              ) : fillConfirm ? (
+                <div>
+                  <p className="mb-3 text-sm text-brand-muted">Mark this opportunity as filled? It will be hidden from the feed.</p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleMarkFilled}
+                      disabled={filling}
+                      className="border border-white/20 text-brand-muted font-mono text-xs tracking-widest px-4 py-2 hover:border-white/40 hover:text-brand-white transition-all duration-200 disabled:opacity-50"
+                    >
+                      {filling ? 'Saving...' : 'Confirm'}
+                    </button>
+                    <button
+                      onClick={() => setFillConfirm(false)}
+                      className="font-mono text-xs tracking-widest text-brand-muted hover:text-brand-white transition-colors duration-200"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setFillConfirm(true)}
+                  className="border border-white/20 text-brand-muted font-mono text-xs tracking-widest px-4 py-2 hover:border-white/40 hover:text-brand-white transition-all duration-200"
+                >
+                  MARK AS FILLED
+                </button>
+              )}
+            </section>
           )}
         </motion.article>
       </main>

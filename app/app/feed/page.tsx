@@ -377,7 +377,7 @@ export default function FeedPage() {
             </button>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 border-t border-white/8 pt-8">
             {rankedPosts.map((post, index) => (
               <PostCard
                 key={post.id}
@@ -423,7 +423,7 @@ export default function FeedPage() {
                     <div className="mb-5 flex items-start justify-between gap-4">
                       <div>
                         <h3 className="text-xl font-display font-medium text-brand-white">{memberName}</h3>
-                        <p className="mt-1 text-sm text-brand-muted">{memberCohort}</p>
+                        <p className="mt-1 font-mono text-xs tracking-widest text-brand-muted">COHORT {memberCohort}</p>
                       </div>
                       {memberLinkedIn ? (
                         <a
