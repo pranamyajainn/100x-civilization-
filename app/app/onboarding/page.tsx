@@ -86,7 +86,7 @@ export default function OnboardingPage() {
     const currentRole = form.currentRole.trim();
     if (currentRole.length < 2) return 'Current role / profession must be at least 2 characters.';
     if (currentRole.length > 100) return 'Current role / profession must be 100 characters or fewer.';
-    if (!isValidLinkedInUrl(linkedinUrl)) return 'LinkedIn Profile URL must start with linkedin.com/in/.';
+    if (!isValidLinkedInUrl(form.linkedinUrl)) return 'Please enter a valid LinkedIn profile URL';
     if (form.skillTags.length < 3) {
       setTagError('Add at least 3 skill tags.');
       return 'Add at least 3 skill tags.';
@@ -390,7 +390,7 @@ function normalizeLinkedInUrl(value: string): string {
 }
 
 function isValidLinkedInUrl(value: string): boolean {
-  return /^linkedin\.com\/in\/[A-Za-z0-9\-_%]+(?:\/)?$/.test(value);
+  return value.trim().toLowerCase().includes('linkedin.com/in/');
 }
 
 function isValidCertificateFile(file: File): boolean {

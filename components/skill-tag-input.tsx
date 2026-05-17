@@ -40,6 +40,10 @@ export function SkillTagInput({ value, onChange, maxTags = 20, error }: Props) {
   const addFreeform = (input: string) => {
     const trimmed = input.trim();
     if (!trimmed) return;
+    if (trimmed.toLowerCase().includes('linkedin.com') || trimmed.toLowerCase().startsWith('http')) {
+      setQuery('');
+      return;
+    }
     const titleCased = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
     if (value.includes(titleCased)) return;
     if (value.length >= maxTags) return;
