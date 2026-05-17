@@ -117,10 +117,16 @@ export default function PendingPage() {
           <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-brand-neon">100x Civilization</span>
         </div>
 
-        <h1 className="mb-3 text-4xl font-display font-medium text-brand-white">You&apos;re on the list.</h1>
+        <h1 className="mb-3 text-4xl font-display font-medium text-brand-white">You&apos;re through the door.</h1>
         <p className="mb-8 text-sm leading-relaxed text-brand-muted">
-          Your profile has been submitted and is pending review. We typically review within 24 hours.
+          We review every member personally. This is how we keep the network worth being in.
         </p>
+
+        <div className="mt-8 space-y-3">
+          <p className="font-mono text-xs tracking-widest text-brand-neon">✓ PROFILE RECEIVED</p>
+          <p className="font-mono text-xs tracking-widest text-brand-muted">→ PERSONAL REVIEW · USUALLY WITHIN 24H</p>
+          <p className="font-mono text-xs tracking-widest text-brand-muted opacity-40">○ WELCOME TO THE CIVILIZATION</p>
+        </div>
 
         {error ? (
           <div className="mb-5 border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-400">
@@ -146,7 +152,7 @@ export default function PendingPage() {
             Check status
           </button>
           <button onClick={handleSignOut} className="text-sm font-mono text-brand-neon hover:underline">
-            Sign out
+            Sign out and come back later
           </button>
         </div>
       </div>

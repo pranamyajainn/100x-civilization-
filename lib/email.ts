@@ -58,14 +58,16 @@ export async function matchNotificationEmail(
 export const sendMatchNotification = matchNotificationEmail;
 
 export async function pendingApprovalEmail(name: string, email: string): Promise<boolean> {
-  const subject = "You're on the list — 100x Civilization";
+  const subject = `You're through the door, ${name}.`;
   const text = [
     `Hi ${name},`,
     ``,
-    `Your profile has been submitted and is pending review.`,
-    `We typically review within 24 hours.`,
+    `Your profile is with us.`,
     ``,
-    `You'll hear from us either way.`,
+    `We review every member personally — this is how`,
+    `we keep the network worth being in.`,
+    ``,
+    `You'll hear from us within 24 hours either way.`,
     ``,
     `— The 100x Civilization team`,
   ].join("\n");
@@ -73,22 +75,32 @@ export async function pendingApprovalEmail(name: string, email: string): Promise
   return sendTextEmail(email, subject, text);
 }
 
-export async function welcomeEmail(name: string, email: string): Promise<boolean> {
-  const subject = "You're in. Welcome to 100x Civilization.";
+export async function welcomeEmail(name: string, email: string, memberCount?: number): Promise<boolean> {
+  const subject = `The door is open, ${name}.`;
   const appUrl = process.env.APP_URL ?? "http://localhost:3000";
-  const text = [
+
+  const lines = [
     `Hi ${name},`,
     ``,
-    `You're approved. Head here to start:`,
+    `You're in.`,
+    ``,
+  ];
+
+  if (memberCount && memberCount > 0) {
+    lines.push(`${memberCount} people are waiting to meet you.`);
+  }
+
+  lines.push(
+    `Head here to start:`,
     `${appUrl}/app/feed`,
     ``,
-    `Post an opportunity or browse what's live.`,
+    `Post what you need or browse who's here.`,
     `The network works when people use it.`,
     ``,
     `— The 100x Civilization team`,
-  ].join("\n");
+  );
 
-  return sendTextEmail(email, subject, text);
+  return sendTextEmail(email, subject, lines.join("\n"));
 }
 
 export async function sendWelcomeEmail(payload: {
