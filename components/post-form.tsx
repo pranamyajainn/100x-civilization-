@@ -194,7 +194,7 @@ export function PostForm({ isOpen, onClose, posterUid, posterName, posterCohort,
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 z-50 h-full w-full max-w-lg overflow-y-auto border-l border-brand-border bg-black"
+            className="fixed right-0 top-0 z-50 max-h-[90vh] w-full max-w-lg overflow-y-auto overscroll-contain border-l border-brand-border bg-black"
           >
             {/* Header */}
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-brand-border bg-black px-6 py-4">
@@ -355,17 +355,19 @@ export function PostForm({ isOpen, onClose, posterUid, posterName, posterCohort,
                   </label>
 
                   {/* Submit */}
-                  <button
-                    onClick={handleSubmit}
-                    disabled={status === 'loading'}
-                    className="mt-2 flex w-full min-h-[44px] items-center justify-center gap-2 bg-brand-neon py-4 font-bold uppercase tracking-widest text-brand-black transition-all hover:bg-[#FF6A26] disabled:opacity-60"
-                  >
-                    {status === 'loading' ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : (
-                      'Post Opportunity'
-                    )}
-                  </button>
+                  <div className="sticky bottom-0 bg-black pt-4">
+                    <button
+                      onClick={handleSubmit}
+                      disabled={status === 'loading'}
+                      className="flex w-full min-h-[44px] items-center justify-center gap-2 bg-brand-neon py-4 font-bold uppercase tracking-widest text-brand-black transition-all hover:bg-[#FF6A26] disabled:opacity-60"
+                    >
+                      {status === 'loading' ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        'Post Opportunity'
+                      )}
+                    </button>
+                  </div>
                 </div>
               )}
 
