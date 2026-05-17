@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { motion } from 'motion/react';
 import { ArrowLeft, Check, Copy, Loader2, Mail } from 'lucide-react';
@@ -190,7 +190,16 @@ export default function PostDetailPage() {
   const handleMarkFilled = async () => {
     setFilling(true);
     try {
-      await updateDoc(doc(db, 'posts', postId), { status: 'closed' });
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch('/api/posts/close', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ postId }),
+      });
+      if (!res.ok) throw new Error('Failed to close post');
       setFilled(true);
       setFillConfirm(false);
     } catch (fillError) {

@@ -137,32 +137,38 @@ export default function FeedPage() {
       }
 
       setUser(currentUser);
-      const profileSnap = await getDoc(doc(db, 'users', currentUser.uid));
-      if (profileSnap.exists()) {
-        const data = profileSnap.data() as UserProfile;
-        const normalizedProfile = {
-          ...data,
-          fullName: safeText(data.fullName),
-          cohort: safeText(data.cohort),
-          email: safeText(data.email, currentUser.email ?? ''),
-          embedding: Array.isArray(data.embedding) ? data.embedding : [],
-          skillTags: Array.isArray(data.skillTags) ? data.skillTags : [],
-        };
-        setIsAdmin(isConfiguredAdminEmail(currentUser.email));
+      try {
+        const profileSnap = await getDoc(doc(db, 'users', currentUser.uid));
+        if (profileSnap.exists()) {
+          const data = profileSnap.data() as UserProfile;
+          const normalizedProfile = {
+            ...data,
+            fullName: safeText(data.fullName),
+            cohort: safeText(data.cohort),
+            email: safeText(data.email, currentUser.email ?? ''),
+            embedding: Array.isArray(data.embedding) ? data.embedding : [],
+            skillTags: Array.isArray(data.skillTags) ? data.skillTags : [],
+          };
+          setIsAdmin(isConfiguredAdminEmail(currentUser.email));
 
-        if (data.celebrationShown === false) {
-          setCelebrationProfile(normalizedProfile);
-          setShowCelebration(true);
-          setLoading(false);
+          if (data.celebrationShown === false) {
+            setCelebrationProfile(normalizedProfile);
+            setShowCelebration(true);
+            setLoading(false);
+            void loadMembers(currentUser.uid);
+            return;
+          }
+
+          setProfile(normalizedProfile);
+          void loadPosts(normalizedProfile);
           void loadMembers(currentUser.uid);
-          return;
+        } else {
+          setLoadError('Could not load the feed. Refresh to try again.');
+          setLoading(false);
         }
-
-        setProfile(normalizedProfile);
-        void loadPosts(normalizedProfile);
-        void loadMembers(currentUser.uid);
-      } else {
-        setLoadError('Could not load the feed. Refresh to try again.');
+      } catch (err) {
+        console.error('[feed] failed to load profile:', err);
+        setLoadError('Failed to load your profile. Please refresh.');
         setLoading(false);
       }
     });

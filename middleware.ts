@@ -51,7 +51,14 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    const access = await getAccessState(sessionUid);
+    let access;
+    try {
+      access = await getAccessState(sessionUid);
+    } catch (err) {
+      console.error("[middleware] Firestore error:", err);
+      return NextResponse.next();
+    }
+
     const approved = access.userStatus === "approved";
     const rejected = access.userStatus === "rejected";
     const pending =
