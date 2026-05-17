@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import { collection, doc, getDoc, getDocs, limit, query, updateDoc, where } from 'firebase/firestore';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { motion } from 'motion/react';
-import { LogOut, Plus, RefreshCw, Settings } from 'lucide-react';
+import { LogOut, Plus, RefreshCw, Settings, User as UserIcon } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { clearSessionCookies } from '@/lib/client-session';
 import { PostCard, PostData } from '@/components/post-card';
@@ -312,6 +312,13 @@ export default function FeedPage() {
                 <Settings size={16} />
               </button>
             ) : null}
+            <button
+              onClick={() => router.push('/app/profile')}
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center text-brand-muted transition-colors hover:text-brand-white"
+              aria-label="Edit profile"
+            >
+              <UserIcon size={16} />
+            </button>
             <button
               onClick={handleSignOut}
               className="flex min-h-[44px] min-w-[44px] items-center justify-center text-brand-muted transition-colors hover:text-brand-white"
