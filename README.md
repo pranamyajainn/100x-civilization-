@@ -1,40 +1,83 @@
-# The 100x Civilization
+# 100x Civilization
 
-Members-only exclusive economic engine for 100x cohorts. A community proposal landing page to mirror the 100x Engineers brand.
+> A private AI-powered opportunity network for 100xEngineers alumni. Invite-only. Live now.
 
-*Note: This is a community project and not an official 100x Engineers product.*
+## What It Is
 
-## Setup & Deployment
+100x Civilization is a closed professional network where 100xEngineers alumni post opportunities — hiring, co-founder searches, paid projects, demo feedback, and warm intros — and receive AI-powered match notifications based on their skill profile. Every member is manually approved before gaining access. The platform is built to preserve the high-trust relationships that form during cohorts and activate them across cohort lines.
 
-Our stack relies on Next.js 14 App Router, standard Tailwind CSS, Framer Motion, and a lightweight client-side Firebase integration for waitlist signups.
+## Live Product
 
-### Firebase Configuration (AI Studio)
+[https://100xcivilization.live](https://100xcivilization.live)
 
-You have successfully connected this project to a Google Cloud Firebase backend using the built-in AI Studio integration.
-- The `lib/firebase.ts` file automatically imports your configuration from `firebase-applet-config.json`.
-- Environment variables (`NEXT_PUBLIC_FIREBASE_*`) are no longer necessary for deployment within the AI Studio environment, as the configuration is bundled with the build.
-- When exporting this applet to GitHub or Vercel, you can swap out the imported config with environment variables if you prefer.
+## Tech Stack
 
-### 4. Vercel Deployment
+- **Next.js 15.5.15** — App Router, server components, API routes (Node.js runtime)
+- **Firebase** — Firestore (database), Authentication (Google OAuth), Storage (certificate uploads)
+- **OpenAI** — `text-embedding-3-small` for semantic skill matching (1536-dim vectors)
+- **Resend** — Transactional email (pending approval, welcome, match notifications, abandoned onboarding recovery)
+- **Vercel** — Hosting, serverless functions, daily cron job
 
-1. Push your repository to GitHub.
-2. In the Vercel dashboard, click "Add New..." -> "Project".
-3. Import your GitHub repository.
-4. Before clicking "Deploy", expand the "Environment Variables" section.
-5. Add all 6 `NEXT_PUBLIC_FIREBASE_*` environment variables matching your local setup.
-6. Hit Deploy. Performance tuning and Lighthouse constraints will automatically hold up through the build.
+## Local Development
 
-### 5. Viewing Signups
+```bash
+# 1. Clone the repository
+git clone https://github.com/pranamyajainn/100x-civilization-.git
+cd 100x-civilization-
 
-1. In the Firebase Console, navigate to the **Firestore Database**.
-2. Go to the "Data" tab.
-3. You will see a collection named `waitlist_signups` populated with cohort members requesting access.
+# 2. Install dependencies
+npm install
 
-### 6. Firestore Indexes for Production
+# 3. Set up environment variables
+cp .env.local.example .env.local
+# Fill in all required values (see Environment Variables table below)
 
-Create these composite indexes before deploying the duplicate-detection flow:
+# 4. Deploy Firestore rules (requires Firebase CLI)
+npm install -g firebase-tools
+firebase login
+firebase deploy --only firestore:rules
 
-- `connections` on `(postId ASC, emailDomain ASC, timestamp ASC)`
-- `connections` on `(postId ASC, deviceFingerprint ASC)`
+# 5. Start the development server
+npm run dev
+```
 
-These are required before the production duplicate check runs in Firebase Console.
+The app runs at `http://localhost:3000`.
+
+## Environment Variables
+
+| Variable | Description |
+|---|---|
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Full Firebase Admin SDK service account JSON, stringified. Download from Firebase Console → Project Settings → Service Accounts. |
+| `OPENAI_API_KEY` | OpenAI API key for generating embeddings via `text-embedding-3-small`. |
+| `RESEND_API_KEY` | Resend API key for sending transactional email. |
+| `RESEND_FROM_EMAIL` | Verified sender address, e.g. `team@100xcivilization.live`. |
+| `APP_URL` | Full production URL, e.g. `https://100xcivilization.live`. Used in email links. |
+| `CRON_SECRET` | Shared secret for authorizing the daily cron endpoint. Set the same value in Vercel project settings. |
+| `NEXT_PUBLIC_ADMIN_EMAILS` | Comma-separated admin email addresses. Controls visibility of the admin UI link on the feed page. |
+
+The Firebase client config (`firebase-applet-config.json`) is bundled in the repository and contains only public project identifiers — no secrets.
+
+## Architecture
+
+See [CTO_REPORT.md](./CTO_REPORT.md) for the full technical architecture, including:
+- Firestore collection schemas
+- Authentication and authorization flow
+- AI matching system design
+- Complete API route reference
+- Security posture and known technical debt
+
+## Project Reports
+
+- [CTO_REPORT.md](./CTO_REPORT.md) — Full technical architecture for engineers and CTOs
+- [CEO_REPORT.md](./CEO_REPORT.md) — Product and business overview for founders and investors
+
+## Team
+
+- **Pranamya Jain** — AI Solutions Architect
+- **Zara Kennedy** — Communications Strategist
+- **Nakshatra Sain** — Growth & Marketing
+- **Arunkumar S.V** — Applied AI Engineer
+
+## License
+
+Built as a 100xEngineers cohort capstone project.
