@@ -21,7 +21,7 @@ export function ActivityTicker({ db }: { db: Firestore }) {
     async function load() {
       try {
         const results = await Promise.allSettled([
-          getDocs(query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(10))),
+          getDocs(query(collection(db, 'posts'), where('status', '==', 'open'), orderBy('createdAt', 'desc'), limit(10))),
           getDocs(
             query(
               collection(db, 'users'),
