@@ -289,7 +289,10 @@ export default function OnboardingPage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-mono uppercase tracking-wider text-brand-muted">Skill Tags * (minimum 5)</label>
+                <label className="text-[10px] font-mono uppercase tracking-wider text-brand-muted">YOUR EXPERTISE (MINIMUM 5)</label>
+                <p className="text-xs font-mono text-brand-muted tracking-wider mb-2">
+                  Add your domain first — marketing, fintech, D2C, edtech — then your technical skills
+                </p>
                 <SkillTagInput
                   value={form.skillTags}
                   onChange={(tags) => {
