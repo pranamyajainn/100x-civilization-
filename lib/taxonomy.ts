@@ -163,6 +163,27 @@ export const SKILL_TAXONOMY: readonly string[] = [
   "technical-writing",
   "pitch-decks",
   "investor-relations",
+
+  // Domain / Industry
+  "d2c",
+  "e-commerce",
+  "edtech",
+  "fintech",
+  "healthtech",
+  "saas",
+  "marketing",
+  "content-creation",
+  "video-production",
+  "operations",
+  "finance",
+  "ui-ux-design",
+  "graphic-design",
+  "real-estate",
+  "legal-tech",
+  "supply-chain",
+  "manufacturing",
+  "consulting",
+  "public-relations",
 ] as const;
 
 export type SkillTag = (typeof SKILL_TAXONOMY)[number];
