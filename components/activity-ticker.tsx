@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
 
@@ -8,6 +9,7 @@ interface ActivityItem {
   type: 'post' | 'join';
   text: string;
   timestamp: number;
+  postId?: string; // only for type === 'post'
 }
 
 export function ActivityTicker({ db }: { db: Firestore }) {
@@ -44,6 +46,7 @@ export function ActivityTicker({ db }: { db: Firestore }) {
               type: 'post',
               text: `${firstName} just posted a ${data.type ?? 'new'} opportunity`,
               timestamp: ts,
+              postId: doc.id,
             });
           });
         }
@@ -96,19 +99,30 @@ export function ActivityTicker({ db }: { db: Firestore }) {
         }
       `}</style>
       <div
-        className="overflow-hidden border-t border-b border-white/10 flex items-center h-9"
+        className="overflow-hidden border-t border-b border-white/10 flex items-center h-11"
         aria-hidden="true"
       >
         <div className="activity-ticker-track">
-          {doubled.map((item, i) => (
-            <span
-              key={i}
-              className="flex items-center whitespace-nowrap font-mono text-xs tracking-widest text-brand-muted px-4"
-            >
-              {item.text}
-              <span className="mx-3 text-brand-neon">·</span>
-            </span>
-          ))}
+          {doubled.map((item, i) =>
+            item.type === 'post' && item.postId ? (
+              <Link
+                key={i}
+                href={`/app/posts/${item.postId}`}
+                className="flex items-center whitespace-nowrap font-mono text-sm tracking-widest text-brand-muted px-4 hover:text-brand-white transition-colors cursor-pointer"
+              >
+                {item.text}
+                <span className="mx-3 text-brand-neon">·</span>
+              </Link>
+            ) : (
+              <span
+                key={i}
+                className="flex items-center whitespace-nowrap font-mono text-sm tracking-widest text-brand-muted px-4"
+              >
+                {item.text}
+                <span className="mx-3 text-brand-neon">·</span>
+              </span>
+            )
+          )}
         </div>
       </div>
     </>

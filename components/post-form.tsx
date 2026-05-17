@@ -221,7 +221,7 @@ export function PostForm({ isOpen, onClose, posterUid, posterName, posterCohort,
                         <button
                           key={t.value}
                           onClick={() => handleSelectType(t.value)}
-                          className="group border border-brand-border p-5 text-left transition-all hover:border-brand-neon/50 hover:bg-brand-neon/5"
+                          className="group border border-brand-border p-5 min-h-[44px] text-left transition-all hover:border-brand-neon/50 hover:bg-brand-neon/5"
                         >
                           <div className="font-display font-medium text-brand-white transition-colors group-hover:text-brand-neon">
                             {t.label}
@@ -360,7 +360,7 @@ export function PostForm({ isOpen, onClose, posterUid, posterName, posterCohort,
                       <button
                         onClick={handleSubmit}
                         disabled={status === 'loading'}
-                        className="mt-2 flex w-full items-center justify-center gap-2 bg-brand-neon py-4 font-bold uppercase tracking-widest text-brand-black transition-all hover:bg-[#FF6A26] disabled:opacity-60"
+                        className="mt-2 flex w-full min-h-[44px] items-center justify-center gap-2 bg-brand-neon py-4 font-bold uppercase tracking-widest text-brand-black transition-all hover:bg-[#FF6A26] disabled:opacity-60"
                       >
                         {status === 'loading' ? (
                           <Loader2 className="h-5 w-5 animate-spin" />

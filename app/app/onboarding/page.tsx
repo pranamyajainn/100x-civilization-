@@ -341,7 +341,7 @@ export default function OnboardingPage() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={!consentChecked || status === 'loading'}
-                className="mt-2 flex min-h-[44px] items-center justify-center gap-2 bg-brand-neon py-4 font-bold uppercase tracking-widest text-brand-black transition-all hover:bg-[#FF6A26] disabled:cursor-not-allowed disabled:opacity-40"
+                className="mt-2 flex w-full min-h-[44px] items-center justify-center gap-2 bg-brand-neon py-4 font-bold uppercase tracking-widest text-brand-black transition-all hover:bg-[#FF6A26] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {status === 'loading' ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Submit for Approval'}
               </button>

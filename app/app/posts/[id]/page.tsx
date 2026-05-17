@@ -255,7 +255,7 @@ export default function PostDetailPage() {
             </span>
           </div>
 
-          <h1 className="mb-4 font-display text-4xl md:text-5xl font-medium leading-tight tracking-tight text-brand-white">
+          <h1 className="mb-4 font-display text-4xl md:text-5xl font-medium leading-tight tracking-tight text-brand-white break-words">
             {post.title}
           </h1>
 
@@ -356,13 +356,13 @@ export default function PostDetailPage() {
                     <button
                       onClick={handleMarkFilled}
                       disabled={filling}
-                      className="border border-white/20 text-brand-muted font-mono text-xs tracking-widest px-4 py-2 hover:border-white/40 hover:text-brand-white transition-all duration-200 disabled:opacity-50"
+                      className="min-h-[44px] border border-white/20 text-brand-muted font-mono text-xs tracking-widest px-4 py-2 hover:border-white/40 hover:text-brand-white transition-all duration-200 disabled:opacity-50"
                     >
                       {filling ? 'Saving...' : 'Confirm'}
                     </button>
                     <button
                       onClick={() => setFillConfirm(false)}
-                      className="font-mono text-xs tracking-widest text-brand-muted hover:text-brand-white transition-colors duration-200"
+                      className="min-h-[44px] font-mono text-xs tracking-widest text-brand-muted hover:text-brand-white transition-colors duration-200"
                     >
                       Cancel
                     </button>
@@ -371,7 +371,7 @@ export default function PostDetailPage() {
               ) : (
                 <button
                   onClick={() => setFillConfirm(true)}
-                  className="border border-white/20 text-brand-muted font-mono text-xs tracking-widest px-4 py-2 hover:border-white/40 hover:text-brand-white transition-all duration-200"
+                  className="w-full min-h-[44px] border border-white/20 text-brand-muted font-mono text-xs tracking-widest px-4 py-2 hover:border-white/40 hover:text-brand-white transition-all duration-200 sm:w-auto"
                 >
                   MARK AS FILLED
                 </button>

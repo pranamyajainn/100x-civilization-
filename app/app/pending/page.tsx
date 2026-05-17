@@ -146,7 +146,7 @@ export default function PendingPage() {
             type="button"
             onClick={() => user && loadStatus(user)}
             disabled={checking}
-            className="inline-flex min-h-[44px] items-center justify-center gap-2 bg-brand-neon px-5 py-3 text-sm font-bold uppercase tracking-widest text-brand-black transition-colors hover:bg-[#FF6A26] disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex min-h-[44px] w-full sm:w-auto items-center justify-center gap-2 bg-brand-neon px-5 py-3 text-sm font-bold uppercase tracking-widest text-brand-black transition-colors hover:bg-[#FF6A26] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             Check status
