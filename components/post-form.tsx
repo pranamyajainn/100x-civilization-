@@ -194,216 +194,212 @@ export function PostForm({ isOpen, onClose, posterUid, posterName, posterCohort,
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 z-50 h-full w-full max-w-lg border-l border-brand-border bg-black"
+            className="fixed right-0 top-0 z-50 h-full w-full max-w-lg overflow-y-auto border-l border-brand-border bg-black"
           >
-            <div className="flex h-full min-h-0 flex-col">
-              {/* Header */}
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-brand-border bg-black px-6 py-4">
-                <div>
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-brand-muted">
-                    {step === 'type' ? 'New Opportunity' : `${POST_TYPES.find(t => t.value === form.type)?.label ?? ''}`}
-                  </p>
-                  <h2 className="text-lg font-display font-medium text-brand-white">
-                    {step === 'type' ? 'What are you looking for?' : 'Fill in the details'}
-                  </h2>
-                </div>
-                <button onClick={handleClose} className="p-2 text-brand-muted hover:text-brand-white transition-colors">
-                  <X size={20} />
-                </button>
+            {/* Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-brand-border bg-black px-6 py-4">
+              <div>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-brand-muted">
+                  {step === 'type' ? 'New Opportunity' : `${POST_TYPES.find(t => t.value === form.type)?.label ?? ''}`}
+                </p>
+                <h2 className="text-lg font-display font-medium text-brand-white">
+                  {step === 'type' ? 'What are you looking for?' : 'Fill in the details'}
+                </h2>
               </div>
+              <button onClick={handleClose} className="p-2 text-brand-muted hover:text-brand-white transition-colors">
+                <X size={20} />
+              </button>
+            </div>
 
-              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-                <div className="p-6">
-                  {/* Step 1: Type selector */}
-                  {step === 'type' && (
-                    <div className="flex flex-col gap-3">
-                      {POST_TYPES.map((t) => (
-                        <button
-                          key={t.value}
-                          onClick={() => handleSelectType(t.value)}
-                          className="group border border-brand-border p-5 min-h-[44px] text-left transition-all hover:border-brand-neon/50 hover:bg-brand-neon/5"
-                        >
-                          <div className="font-display font-medium text-brand-white transition-colors group-hover:text-brand-neon">
-                            {t.label}
-                          </div>
-                          <div className="mt-1 text-xs text-brand-muted">{t.description}</div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Step 2: Details form */}
-                  {step === 'details' && status !== 'success' && (
-                    <div className="flex flex-col gap-5">
-                      {/* Back */}
-                      <button
-                        onClick={() => setStep('type')}
-                        className="text-left text-[11px] font-mono text-brand-muted transition-colors hover:text-brand-white"
-                      >
-                        ← Change type
-                      </button>
-
-                      {errorMsg && (
-                        <div className="border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-400">
-                          {errorMsg}
-                        </div>
-                      )}
-
-                      {/* Title */}
-                      <Field label="Title *">
-                        <input
-                          type="text" required maxLength={120}
-                          value={form.title}
-                          onChange={(e) => set('title', e.target.value)}
-                          placeholder={titlePlaceholder(form.type as PostType)}
-                          className={inputCls}
-                        />
-                      </Field>
-
-                      {/* Description */}
-                      <Field label="Description *">
-                        <textarea
-                          required maxLength={1500} rows={4}
-                          value={form.description}
-                          onChange={(e) => set('description', e.target.value)}
-                          placeholder="Be specific — what do you need, what's the context, what does success look like?"
-                          className={`${inputCls} resize-none`}
-                        />
-                      </Field>
-
-                      {/* Conditional: Compensation */}
-                      {(form.type === 'hiring' || form.type === 'paid-project') && (
-                        <Field label="Compensation / Budget">
-                          <input
-                            type="text" maxLength={100}
-                            value={form.compensation}
-                            onChange={(e) => set('compensation', e.target.value)}
-                            placeholder={form.type === 'hiring' ? 'e.g. ₹30-40L CTC' : 'e.g. $2K fixed, 4-week project'}
-                            className={inputCls}
-                          />
-                        </Field>
-                      )}
-
-                      {/* Conditional: Commitment */}
-                      {(form.type === 'hiring' || form.type === 'co-founder') && (
-                        <Field label="Commitment Expected">
-                          <input
-                            type="text" maxLength={100}
-                            value={form.commitment}
-                            onChange={(e) => set('commitment', e.target.value)}
-                            placeholder={form.type === 'hiring' ? 'Full-time / Part-time / Contract' : 'Full-time co-founder, 40h/week'}
-                            className={inputCls}
-                          />
-                        </Field>
-                      )}
-
-                      {/* Conditional: Equity */}
-                      {form.type === 'co-founder' && (
-                        <Field label="Equity Structure">
-                          <input
-                            type="text" maxLength={100}
-                            value={form.equity}
-                            onChange={(e) => set('equity', e.target.value)}
-                            placeholder="e.g. 30% equity, 2-year cliff, 4-year vest"
-                            className={inputCls}
-                          />
-                        </Field>
-                      )}
-
-                      {/* Conditional: Target intro */}
-                      {form.type === 'warm-intro' && (
-                        <Field label="Who / What you need an intro to *">
-                          <input
-                            type="text" maxLength={200}
-                            value={form.targetIntro}
-                            onChange={(e) => set('targetIntro', e.target.value)}
-                            placeholder="e.g. Sequoia India or a Series-A SaaS growth lead"
-                            className={inputCls}
-                          />
-                        </Field>
-                      )}
-
-                      {/* Skill tags */}
-                      <Field label="Relevant Skills">
-                        <SkillTagInput
-                          value={form.skillTags}
-                          onChange={(tags) => set('skillTags', tags)}
-                        />
-                      </Field>
-
-                      {/* Contact email */}
-                      <Field label="Contact Email (shown to matched alumni)">
-                        <input
-                          type="email" maxLength={120}
-                          value={form.contactEmail}
-                          onChange={(e) => set('contactEmail', e.target.value)}
-                          className={inputCls}
-                        />
-                      </Field>
-
-                      {/* Contact visible toggle */}
-                      <label className="flex cursor-pointer select-none items-center gap-3">
-                        <div
-                          role="switch"
-                          aria-checked={form.contactVisible}
-                          onClick={() => set('contactVisible', !form.contactVisible)}
-                          className={`relative h-5 w-10 rounded-full border transition-colors ${form.contactVisible ? 'border-brand-neon bg-brand-neon' : 'border-brand-border bg-transparent'}`}
-                        >
-                          <span className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-black transition-transform ${form.contactVisible ? 'translate-x-5' : ''}`} />
-                        </div>
-                        <span className="text-sm text-brand-white/70">
-                          Make my contact visible to matched alumni
-                        </span>
-                      </label>
-
-                      {/* Submit */}
-                      <button
-                        onClick={handleSubmit}
-                        disabled={status === 'loading'}
-                        className="mt-2 flex w-full min-h-[44px] items-center justify-center gap-2 bg-brand-neon py-4 font-bold uppercase tracking-widest text-brand-black transition-all hover:bg-[#FF6A26] disabled:opacity-60"
-                      >
-                        {status === 'loading' ? (
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                        ) : (
-                          'Post Opportunity'
-                        )}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Success state */}
-                  {status === 'success' && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="flex flex-col items-center gap-6 py-12 text-center"
+            <div className="p-6">
+              {/* Step 1: Type selector */}
+              {step === 'type' && (
+                <div className="flex flex-col gap-3">
+                  {POST_TYPES.map((t) => (
+                    <button
+                      key={t.value}
+                      onClick={() => handleSelectType(t.value)}
+                      className="group border border-brand-border p-5 min-h-[44px] text-left transition-all hover:border-brand-neon/50 hover:bg-brand-neon/5"
                     >
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-neon/10">
-                        <svg className="h-8 w-8 text-brand-neon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
+                      <div className="font-display font-medium text-brand-white transition-colors group-hover:text-brand-neon">
+                        {t.label}
                       </div>
-                      <div>
-                        <h3 className="mb-2 text-xl font-display font-medium text-brand-white">Opportunity posted.</h3>
-                        <p className="max-w-xs text-sm text-brand-muted">
-                          Matched alumni will receive a notification email within 15 minutes.
-                        </p>
-                        {warningMsg ? (
-                          <p className="mt-4 max-w-sm border border-amber-500/40 bg-amber-500/10 p-3 text-left text-sm text-amber-300">
-                            {warningMsg}
-                          </p>
-                        ) : null}
-                      </div>
-                      <button
-                        onClick={handleClose}
-                        className="border border-brand-border px-8 py-3 font-mono text-sm text-brand-white transition-colors hover:border-brand-neon/50"
-                      >
-                        Return to Feed
-                      </button>
-                    </motion.div>
-                  )}
+                      <div className="mt-1 text-xs text-brand-muted">{t.description}</div>
+                    </button>
+                  ))}
                 </div>
-              </div>
+              )}
+
+              {/* Step 2: Details form */}
+              {step === 'details' && status !== 'success' && (
+                <div className="flex flex-col gap-5">
+                  {/* Back */}
+                  <button
+                    onClick={() => setStep('type')}
+                    className="text-left text-[11px] font-mono text-brand-muted transition-colors hover:text-brand-white"
+                  >
+                    ← Change type
+                  </button>
+
+                  {errorMsg && (
+                    <div className="border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-400">
+                      {errorMsg}
+                    </div>
+                  )}
+
+                  {/* Title */}
+                  <Field label="Title *">
+                    <input
+                      type="text" required maxLength={120}
+                      value={form.title}
+                      onChange={(e) => set('title', e.target.value)}
+                      placeholder={titlePlaceholder(form.type as PostType)}
+                      className={inputCls}
+                    />
+                  </Field>
+
+                  {/* Description */}
+                  <Field label="Description *">
+                    <textarea
+                      required maxLength={1500} rows={4}
+                      value={form.description}
+                      onChange={(e) => set('description', e.target.value)}
+                      placeholder="Be specific — what do you need, what's the context, what does success look like?"
+                      className={`${inputCls} resize-none`}
+                    />
+                  </Field>
+
+                  {/* Conditional: Compensation */}
+                  {(form.type === 'hiring' || form.type === 'paid-project') && (
+                    <Field label="Compensation / Budget">
+                      <input
+                        type="text" maxLength={100}
+                        value={form.compensation}
+                        onChange={(e) => set('compensation', e.target.value)}
+                        placeholder={form.type === 'hiring' ? 'e.g. ₹30-40L CTC' : 'e.g. $2K fixed, 4-week project'}
+                        className={inputCls}
+                      />
+                    </Field>
+                  )}
+
+                  {/* Conditional: Commitment */}
+                  {(form.type === 'hiring' || form.type === 'co-founder') && (
+                    <Field label="Commitment Expected">
+                      <input
+                        type="text" maxLength={100}
+                        value={form.commitment}
+                        onChange={(e) => set('commitment', e.target.value)}
+                        placeholder={form.type === 'hiring' ? 'Full-time / Part-time / Contract' : 'Full-time co-founder, 40h/week'}
+                        className={inputCls}
+                      />
+                    </Field>
+                  )}
+
+                  {/* Conditional: Equity */}
+                  {form.type === 'co-founder' && (
+                    <Field label="Equity Structure">
+                      <input
+                        type="text" maxLength={100}
+                        value={form.equity}
+                        onChange={(e) => set('equity', e.target.value)}
+                        placeholder="e.g. 30% equity, 2-year cliff, 4-year vest"
+                        className={inputCls}
+                      />
+                    </Field>
+                  )}
+
+                  {/* Conditional: Target intro */}
+                  {form.type === 'warm-intro' && (
+                    <Field label="Who / What you need an intro to *">
+                      <input
+                        type="text" maxLength={200}
+                        value={form.targetIntro}
+                        onChange={(e) => set('targetIntro', e.target.value)}
+                        placeholder="e.g. Sequoia India or a Series-A SaaS growth lead"
+                        className={inputCls}
+                      />
+                    </Field>
+                  )}
+
+                  {/* Skill tags */}
+                  <Field label="Relevant Skills">
+                    <SkillTagInput
+                      value={form.skillTags}
+                      onChange={(tags) => set('skillTags', tags)}
+                    />
+                  </Field>
+
+                  {/* Contact email */}
+                  <Field label="Contact Email (shown to matched alumni)">
+                    <input
+                      type="email" maxLength={120}
+                      value={form.contactEmail}
+                      onChange={(e) => set('contactEmail', e.target.value)}
+                      className={inputCls}
+                    />
+                  </Field>
+
+                  {/* Contact visible toggle */}
+                  <label className="flex cursor-pointer select-none items-center gap-3">
+                    <div
+                      role="switch"
+                      aria-checked={form.contactVisible}
+                      onClick={() => set('contactVisible', !form.contactVisible)}
+                      className={`relative h-5 w-10 rounded-full border transition-colors ${form.contactVisible ? 'border-brand-neon bg-brand-neon' : 'border-brand-border bg-transparent'}`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-black transition-transform ${form.contactVisible ? 'translate-x-5' : ''}`} />
+                    </div>
+                    <span className="text-sm text-brand-white/70">
+                      Make my contact visible to matched alumni
+                    </span>
+                  </label>
+
+                  {/* Submit */}
+                  <button
+                    onClick={handleSubmit}
+                    disabled={status === 'loading'}
+                    className="mt-2 flex w-full min-h-[44px] items-center justify-center gap-2 bg-brand-neon py-4 font-bold uppercase tracking-widest text-brand-black transition-all hover:bg-[#FF6A26] disabled:opacity-60"
+                  >
+                    {status === 'loading' ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      'Post Opportunity'
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {/* Success state */}
+              {status === 'success' && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex flex-col items-center gap-6 py-12 text-center"
+                >
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-neon/10">
+                    <svg className="h-8 w-8 text-brand-neon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="mb-2 text-xl font-display font-medium text-brand-white">Opportunity posted.</h3>
+                    <p className="max-w-xs text-sm text-brand-muted">
+                      Matched alumni will receive a notification email within 15 minutes.
+                    </p>
+                    {warningMsg ? (
+                      <p className="mt-4 max-w-sm border border-amber-500/40 bg-amber-500/10 p-3 text-left text-sm text-amber-300">
+                        {warningMsg}
+                      </p>
+                    ) : null}
+                  </div>
+                  <button
+                    onClick={handleClose}
+                    className="border border-brand-border px-8 py-3 font-mono text-sm text-brand-white transition-colors hover:border-brand-neon/50"
+                  >
+                    Return to Feed
+                  </button>
+                </motion.div>
+              )}
             </div>
           </motion.div>
         </>
