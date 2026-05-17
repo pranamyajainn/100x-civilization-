@@ -1,13 +1,13 @@
 'use client';
 
 /**
- * SkillTagInput — Autocomplete input for the controlled skill taxonomy.
- * Freeform terms that don't exist in SKILL_TAXONOMY are rejected.
- * Minimum 5 tags enforced by parent form validation.
+ * SkillTagInput — Autocomplete input for the skill taxonomy.
+ * Taxonomy suggestions shown as hints; freeform terms also accepted (Title-Case).
+ * Minimum 3 tags enforced by parent form validation.
  */
 
 import { useState, useRef, KeyboardEvent } from 'react';
-import { SKILL_TAXONOMY, isValidSkill, skillLabel } from '@/lib/taxonomy';
+import { SKILL_TAXONOMY, skillLabel } from '@/lib/taxonomy';
 import { X } from 'lucide-react';
 
 interface Props {
@@ -29,10 +29,21 @@ export function SkillTagInput({ value, onChange, maxTags = 20, error }: Props) {
   ).slice(0, 8);
 
   const addTag = (tag: string) => {
-    if (!isValidSkill(tag)) return;
     if (value.includes(tag)) return;
     if (value.length >= maxTags) return;
     onChange([...value, tag]);
+    setQuery('');
+    setOpen(false);
+    inputRef.current?.focus();
+  };
+
+  const addFreeform = (input: string) => {
+    const trimmed = input.trim();
+    if (!trimmed) return;
+    const titleCased = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+    if (value.includes(titleCased)) return;
+    if (value.length >= maxTags) return;
+    onChange([...value, titleCased]);
     setQuery('');
     setOpen(false);
     inputRef.current?.focus();
@@ -45,7 +56,11 @@ export function SkillTagInput({ value, onChange, maxTags = 20, error }: Props) {
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (suggestions.length > 0) addTag(suggestions[0]);
+      if (suggestions.length > 0) {
+        addTag(suggestions[0]);
+      } else if (query.trim().length > 0) {
+        addFreeform(query);
+      }
     }
     if (e.key === 'Escape') {
       setOpen(false);
@@ -122,7 +137,7 @@ export function SkillTagInput({ value, onChange, maxTags = 20, error }: Props) {
 
         {open && query.length > 0 && suggestions.length === 0 && (
           <div className="absolute z-50 w-full bg-black border border-brand-border mt-1 px-4 py-3 text-xs text-brand-muted font-mono">
-            No matching skills. Use the taxonomy terms only.
+            Press Enter to add &ldquo;{query}&rdquo; as a custom tag
           </div>
         )}
       </div>
@@ -132,7 +147,7 @@ export function SkillTagInput({ value, onChange, maxTags = 20, error }: Props) {
       )}
 
       <p className="text-[10px] text-brand-muted font-mono">
-        {value.length}/min 5 tags · Press Enter to add top suggestion
+        {value.length}/min 3 tags · Press Enter to add
       </p>
     </div>
   );

@@ -87,9 +87,9 @@ export default function OnboardingPage() {
     if (currentRole.length < 2) return 'Current role / profession must be at least 2 characters.';
     if (currentRole.length > 100) return 'Current role / profession must be 100 characters or fewer.';
     if (!isValidLinkedInUrl(linkedinUrl)) return 'LinkedIn Profile URL must start with linkedin.com/in/.';
-    if (form.skillTags.length < 5) {
-      setTagError('Add at least 5 skill tags.');
-      return 'Add at least 5 skill tags.';
+    if (form.skillTags.length < 3) {
+      setTagError('Add at least 3 skill tags.');
+      return 'Add at least 3 skill tags.';
     }
     setTagError('');
     if (!consentChecked) return 'Consent is required to submit.';
@@ -289,7 +289,7 @@ export default function OnboardingPage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-mono uppercase tracking-wider text-brand-muted">YOUR EXPERTISE (MINIMUM 5)</label>
+                <label className="text-[10px] font-mono uppercase tracking-wider text-brand-muted">YOUR EXPERTISE (MINIMUM 3)</label>
                 <p className="text-xs font-mono text-brand-muted tracking-wider mb-2">
                   Add your domain first — marketing, fintech, D2C, edtech — then your technical skills
                 </p>
@@ -297,7 +297,7 @@ export default function OnboardingPage() {
                   value={form.skillTags}
                   onChange={(tags) => {
                     handleFieldChange('skillTags', tags);
-                    if (tags.length >= 5) setTagError('');
+                    if (tags.length >= 3) setTagError('');
                   }}
                   error={tagError}
                 />
