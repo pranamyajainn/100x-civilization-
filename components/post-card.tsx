@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'motion/react';
+import { ArrowRight } from 'lucide-react';
 import { skillLabel } from '@/lib/taxonomy';
 
 export type PostType = 'hiring' | 'co-founder' | 'paid-project' | 'pressure-test' | 'warm-intro';
@@ -54,7 +55,7 @@ export function PostCard({ post, onClick, index = 0 }: PostCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.04 }}
       onClick={() => onClick(post.id)}
-      className="group relative bg-black border border-brand-border hover:border-brand-neon/40 transition-all duration-200 cursor-pointer p-6"
+      className="group relative bg-black border border-brand-border hover:border-white/20 transition-colors duration-300 cursor-pointer p-6"
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onClick(post.id)}
@@ -63,7 +64,7 @@ export function PostCard({ post, onClick, index = 0 }: PostCardProps) {
       {/* Top row */}
       <div className="flex items-start justify-between gap-4 mb-4">
         <div className="flex items-center gap-3">
-          <span className={`inline-block text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 border ${typeColor}`}>
+          <span className={`inline-block text-[10px] font-mono uppercase tracking-widest px-2.5 py-1 border ${typeColor}`}>
             {typeLabel}
           </span>
           {post.relevanceScore !== undefined && post.relevanceScore > 0.3 && (
@@ -109,8 +110,8 @@ export function PostCard({ post, onClick, index = 0 }: PostCardProps) {
             {post.posterName} · {post.posterCohort}
           </span>
         </div>
-        <span className="text-[11px] font-mono text-brand-neon opacity-0 group-hover:opacity-100 transition-opacity">
-          View →
+        <span className="inline-flex items-center gap-1 text-[11px] font-mono text-brand-neon opacity-0 group-hover:opacity-100 transition-opacity">
+          View <ArrowRight size={12} />
         </span>
       </div>
 

@@ -18,6 +18,7 @@ import { clearSessionCookies } from '@/lib/client-session';
 import { PostCard, PostData } from '@/components/post-card';
 import { PostForm } from '@/components/post-form';
 import { scoreFeedRelevance } from '@/lib/matching';
+import { ActivityTicker } from '@/components/activity-ticker';
 
 interface UserProfile {
   uid: string;
@@ -31,6 +32,7 @@ interface UserProfile {
   status?: string;
   isAdmin?: boolean;
   celebrationShown?: boolean;
+  approvedAt?: { toMillis(): number } | null;
 }
 
 export default function FeedPage() {
@@ -204,6 +206,8 @@ export default function FeedPage() {
       });
   }, [posts, profile?.embedding, profile?.skillTags]);
 
+  const isNewMember = checkIsNewMember(profile);
+
   const profileDisplayName = safeText(profile?.fullName, safeText(profile?.email, 'there'));
   const profileFirstName = profileDisplayName.match(/^\S+/)?.[0] ?? 'there';
   const profileCohort = safeText(profile?.cohort, '100x alum');
@@ -242,6 +246,16 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-brand-black">
+      <ActivityTicker db={db} />
+
+      {isNewMember ? (
+        <div className="w-full py-3 px-6 bg-brand-neon/10 border-b border-brand-neon/20">
+          <p className="font-mono text-xs tracking-widest text-brand-neon uppercase text-center">
+            WELCOME TO THE NETWORK · POST YOUR FIRST OPPORTUNITY OR BROWSE THE MEMBERS BELOW
+          </p>
+        </div>
+      ) : null}
+
       {showCelebration ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-black px-6">
           <motion.div
@@ -272,14 +286,14 @@ export default function FeedPage() {
         </div>
       ) : null}
 
-      <header className="sticky top-0 z-30 border-b border-brand-border bg-black/90 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b border-white/8 bg-brand-black/80 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
           <div className="flex items-center gap-3">
             <div className="relative flex h-3 w-3 items-center justify-center">
               <div className="absolute inset-0 rounded-full border border-brand-neon" />
               <div className="h-1 w-1 rounded-full bg-brand-neon" />
             </div>
-            <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-brand-neon">100x Civilization</span>
+            <span className="font-display text-sm uppercase tracking-[0.3em] text-brand-neon">100x Civilization</span>
           </div>
 
           <div className="flex items-center gap-1">
@@ -306,9 +320,9 @@ export default function FeedPage() {
       <main className="mx-auto max-w-5xl px-6 py-10">
         <div className="mb-8 flex items-start justify-between gap-4">
           <div>
-            <h1 className="mb-1 text-3xl font-display font-medium text-brand-white">Opportunities</h1>
+            <h1 className="mb-1 font-display text-4xl md:text-5xl font-medium text-brand-white leading-tight">Opportunities</h1>
             {profile ? (
-              <p className="text-sm text-brand-muted">
+              <p className="text-xs font-mono tracking-widest text-brand-muted uppercase">
                 Hi {profileFirstName} · {profileCohort} · {rankedPosts.length} relevant opportunities
               </p>
             ) : null}
@@ -317,7 +331,7 @@ export default function FeedPage() {
           <button
             id="post-opportunity-btn"
             onClick={() => setPostFormOpen(true)}
-            className="flex min-h-[44px] w-full items-center justify-center gap-2 whitespace-nowrap bg-brand-neon px-5 py-3 text-sm font-semibold text-brand-black transition-colors hover:bg-[#FF6A26] sm:w-auto"
+            className="flex min-h-[44px] w-full items-center justify-center gap-2 whitespace-nowrap bg-brand-neon px-5 py-3 text-sm font-semibold text-brand-black transition-all duration-200 shadow-[0_0_20px_rgba(255,107,53,0.3)] hover:bg-[#FF6A26] hover:shadow-[0_0_30px_rgba(255,107,53,0.5)] sm:w-auto"
           >
             <Plus size={16} />
             Post an opportunity
@@ -377,8 +391,8 @@ export default function FeedPage() {
 
         <section className="mt-16">
           <div className="mb-8">
-            <h2 className="mb-1 text-3xl font-display font-medium text-brand-white">Members</h2>
-            <p className="text-sm text-brand-muted">Connect directly with other alumni</p>
+            <h2 className="mb-1 font-display text-3xl md:text-4xl font-medium text-brand-white">Members</h2>
+            <p className="text-xs font-mono tracking-widest text-brand-muted uppercase">YOUR NETWORK · CONNECT DIRECTLY</p>
           </div>
 
           {membersLoading ? (
@@ -405,7 +419,7 @@ export default function FeedPage() {
                 const memberEmail = safeText(member.email);
 
                 return (
-                  <div key={member.uid} className="border border-brand-border bg-black p-6">
+                  <div key={member.uid} className="border border-white/8 bg-white/[0.02] hover:border-white/20 transition-colors duration-300 p-6">
                     <div className="mb-5 flex items-start justify-between gap-4">
                       <div>
                         <h3 className="text-xl font-display font-medium text-brand-white">{memberName}</h3>
@@ -547,4 +561,9 @@ function MemberCardSkeleton() {
 
 function toExternalUrl(value: string) {
   return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+}
+
+function checkIsNewMember(profile: UserProfile | null): boolean {
+  if (!profile?.celebrationShown || !profile.approvedAt) return false;
+  return Date.now() - profile.approvedAt.toMillis() < 48 * 60 * 60 * 1000;
 }
