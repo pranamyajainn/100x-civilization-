@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { browserPopupRedirectResolver, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, doc, getCountFromServer, getDoc, query, where } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import { clearSessionCookies, setSessionCookies } from '@/lib/client-session';
@@ -12,6 +12,8 @@ export default function InviteSignInPage() {
   const router = useRouter();
   const [error, setError] = useState('');
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [showInterstitial, setShowInterstitial] = useState(false);
+  const [memberNumber, setMemberNumber] = useState(0);
 
   async function handleGoogleSignIn() {
     setError('');
@@ -33,18 +35,37 @@ export default function InviteSignInPage() {
       if (userDoc.exists() && userDoc.data()?.status === 'approved') {
         router.push('/app/feed');
       } else {
+        // Get member count before showing interstitial
+        let memberCount = 0;
         try {
-          const token = await result.user.getIdToken();
-          await fetch('/api/auth/partial-signup', {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          });
+          const countSnap = await getCountFromServer(
+            query(collection(db, 'users'), where('status', '==', 'approved'))
+          );
+          memberCount = countSnap.data().count + 1;
         } catch {
-          // non-critical — swallow and proceed
+          // swallow — interstitial shows without number
         }
+
+        setMemberNumber(memberCount);
+        setShowInterstitial(true);
+
+        // Fire partial-signup without blocking the interstitial wait
+        void (async () => {
+          try {
+            const token = await result.user.getIdToken();
+            await fetch('/api/auth/partial-signup', {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+            });
+          } catch {
+            // non-critical
+          }
+        })();
+
+        await new Promise<void>((resolve) => setTimeout(resolve, 2800));
         router.push('/app/onboarding');
       }
     } catch (err) {
@@ -68,7 +89,42 @@ export default function InviteSignInPage() {
   }
 
   return (
-    <main className="min-h-screen bg-brand-black flex items-center justify-center px-6">
+    <>
+      {showInterstitial ? (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-brand-black">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            className="text-center px-6"
+          >
+            <p className="font-mono text-xs tracking-[0.3em] text-brand-muted uppercase mb-6">
+              100X CIVILIZATION
+            </p>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <p className="font-display text-7xl md:text-9xl font-medium text-brand-white leading-none mb-4">
+                {memberNumber ? `#${memberNumber}` : ''}
+              </p>
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.7 }}
+              className="font-mono text-xs tracking-[0.4em] text-brand-neon uppercase"
+            >
+              WELCOME TO THE CIVILIZATION
+            </motion.p>
+          </motion.div>
+        </div>
+      ) : null}
+
+      <main className="min-h-screen bg-brand-black flex items-center justify-center px-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -118,6 +174,7 @@ export default function InviteSignInPage() {
         </p>
       </motion.div>
     </main>
+    </>
   );
 }
 

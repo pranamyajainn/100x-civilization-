@@ -67,9 +67,11 @@ export function PostCard({ post, onClick, index = 0 }: PostCardProps) {
           <span className={`inline-block text-[10px] font-mono uppercase tracking-widest px-2.5 py-1 border ${typeColor}`}>
             {typeLabel}
           </span>
-          {post.relevanceScore !== undefined && post.relevanceScore > 0.3 && (
-            <span className="inline-block text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 bg-brand-neon/5 border border-brand-neon/20 text-brand-neon/60">
-              Strong Match
+          {post.relevanceScore !== undefined && post.relevanceScore >= 0.3 && (
+            <span
+              className={`inline-block text-[10px] font-mono tracking-widest px-2.5 py-1 bg-brand-neon/5 border border-brand-neon/20 ${post.relevanceScore >= 0.7 ? 'text-brand-neon' : 'text-brand-muted'}`}
+            >
+              {Math.round(post.relevanceScore * 100)}% match
             </span>
           )}
         </div>
