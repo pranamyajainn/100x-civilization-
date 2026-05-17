@@ -130,6 +130,28 @@ export async function sendRejectionEmail(payload: {
   return sendTextEmail(payload.to, subject, text);
 }
 
+export async function abandonedOnboardingEmail(
+  name: string,
+  email: string,
+  appUrl: string,
+): Promise<void> {
+  const subject = "You're one step away from 100x Civilization";
+  const text = [
+    `Hi ${name},`,
+    ``,
+    `You started joining 100x Civilization but didn't finish your profile.`,
+    ``,
+    `It takes 2 minutes. Complete it here:`,
+    `${appUrl}/app/onboarding`,
+    ``,
+    `Once submitted, we review and approve within 24 hours.`,
+    ``,
+    `— The 100x Civilization team`,
+  ].join('\n');
+
+  await sendTextEmail(email, subject, text);
+}
+
 async function sendTextEmail(to: string, subject: string, text: string): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL;

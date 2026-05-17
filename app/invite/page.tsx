@@ -33,6 +33,18 @@ export default function InviteSignInPage() {
       if (userDoc.exists() && userDoc.data()?.status === 'approved') {
         router.push('/app/feed');
       } else {
+        try {
+          const token = await result.user.getIdToken();
+          await fetch('/api/auth/partial-signup', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+        } catch {
+          // non-critical — swallow and proceed
+        }
         router.push('/app/onboarding');
       }
     } catch (err) {

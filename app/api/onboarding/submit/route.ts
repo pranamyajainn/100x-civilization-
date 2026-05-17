@@ -98,6 +98,12 @@ export async function POST(request: NextRequest) {
       ),
     ]);
 
+    await adminDb
+      .collection('incomplete_signups')
+      .doc(authUser.uid)
+      .delete()
+      .catch(() => {}); // silent — doc may not exist
+
     const emailSent = await pendingApprovalEmail(fullName, email);
     if (!emailSent) {
       console.error('[onboarding/submit] pending approval email failed for', authUser.uid);
