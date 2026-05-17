@@ -195,7 +195,6 @@ export default function FeedPage() {
           relevanceScore: score,
         };
       })
-      .filter((post) => post.relevanceScore > 0)
       .sort((left, right) => {
         if (Math.abs(left.relevanceScore - right.relevanceScore) > 0.05) {
           return right.relevanceScore - left.relevanceScore;
@@ -354,14 +353,13 @@ export default function FeedPage() {
           </motion.div>
         ) : rankedPosts.length === 0 ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-20 text-center">
-            <p className="mb-4 text-sm text-brand-muted">
-              Add more skills to your profile to see relevant opportunities.
-            </p>
+            <p className="mb-2 text-lg font-display font-medium text-brand-white">No opportunities yet.</p>
+            <p className="mb-4 text-sm text-brand-muted">Be the first to post one.</p>
             <button
-              onClick={() => router.push('/app/profile')}
+              onClick={() => setPostFormOpen(true)}
               className="text-sm font-mono text-brand-neon hover:underline"
             >
-              Edit profile
+              Post an opportunity
             </button>
           </motion.div>
         ) : (
@@ -403,8 +401,6 @@ export default function FeedPage() {
                 const memberName = safeText(member.fullName, safeText(member.email, 'Member'));
                 const memberCohort = safeText(member.cohort, '100x alum');
                 const memberSkills = Array.isArray(member.skillTags) ? member.skillTags : [];
-                const visibleSkills = memberSkills.slice(0, 4);
-                const remainingSkillCount = Math.max(memberSkills.length - visibleSkills.length, 0);
                 const memberLinkedIn = safeText(member.linkedinUrl);
                 const memberEmail = safeText(member.email);
 
@@ -427,9 +423,9 @@ export default function FeedPage() {
                       ) : null}
                     </div>
 
-                    {visibleSkills.length > 0 ? (
+                    {memberSkills.length > 0 ? (
                       <div className="mb-5 flex flex-wrap gap-2">
-                        {visibleSkills.map((skill) => (
+                        {memberSkills.map((skill) => (
                           <span
                             key={`${member.uid}-${skill}`}
                             className="border border-brand-border px-2 py-1 text-[11px] font-mono uppercase tracking-[0.16em] text-brand-muted"
@@ -437,11 +433,6 @@ export default function FeedPage() {
                             {skill}
                           </span>
                         ))}
-                        {remainingSkillCount > 0 ? (
-                          <span className="border border-brand-border px-2 py-1 text-[11px] font-mono uppercase tracking-[0.16em] text-brand-muted">
-                            +{remainingSkillCount} more
-                          </span>
-                        ) : null}
                       </div>
                     ) : (
                       <p className="mb-5 text-sm text-brand-muted">Skills not listed yet.</p>
