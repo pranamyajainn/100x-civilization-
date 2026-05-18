@@ -384,14 +384,11 @@ function isValidFullName(value: string): boolean {
 function normalizeLinkedInUrl(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return '';
-  return trimmed
-    .replace(/^https?:\/\//i, '')
-    .replace(/^www\./i, '')
-    .replace(/\/+$/, '');
+  return trimmed.split('?')[0].replace(/\/+$/, '');
 }
 
 function isValidLinkedInUrl(value: string): boolean {
-  return value.trim().toLowerCase().includes('linkedin.com/in/');
+  return /^https?:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9\-_%]+\/?(\?.*)?$/.test(value.trim());
 }
 
 function isValidCertificateFile(file: File): boolean {

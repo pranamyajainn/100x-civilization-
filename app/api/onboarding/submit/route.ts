@@ -116,10 +116,8 @@ function normalizeWhitespace(value: string): string {
 }
 
 function normalizeLinkedInUrl(value: string): string {
-  return normalizeWhitespace(value)
-    .replace(/^https?:\/\//i, '')
-    .replace(/^www\./i, '')
-    .replace(/\/+$/, '');
+  const trimmed = normalizeWhitespace(value);
+  return trimmed.split('?')[0].replace(/\/+$/, '');
 }
 
 function isValidFullName(value: string): boolean {
@@ -127,5 +125,5 @@ function isValidFullName(value: string): boolean {
 }
 
 function isValidLinkedInUrl(value: string): boolean {
-  return /^linkedin\.com\/in\/[A-Za-z0-9\-_%]+(?:\/)?$/.test(value);
+  return /^https?:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9\-_%]+\/?(\?.*)?$/.test(value);
 }
