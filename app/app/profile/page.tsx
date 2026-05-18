@@ -38,6 +38,7 @@ interface Profile {
   notificationsEnabled: boolean;
   consentGiven: boolean;
   embedding: number[];
+  isFoundingMember?: boolean;
 }
 
 export default function ProfilePage() {
@@ -69,6 +70,7 @@ export default function ProfilePage() {
             notificationsEnabled: d.notificationsEnabled ?? true,
             consentGiven: d.consentGiven ?? true,
             embedding: Array.isArray(d.embedding) ? d.embedding : [],
+            isFoundingMember: d.isFoundingMember ?? false,
           });
         }
       } catch (err) {
@@ -184,7 +186,14 @@ export default function ProfilePage() {
 
       <main className="max-w-xl mx-auto px-6 py-10">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-          <h1 className="text-3xl font-display font-medium text-brand-white mb-1">{form.fullName}</h1>
+          <h1 className="text-3xl font-display font-medium text-brand-white mb-1">
+            {form.fullName}
+            {form.isFoundingMember ? (
+              <span className="inline-block font-mono text-[8px] tracking-[0.2em] text-brand-neon border border-brand-neon/40 px-1.5 py-0.5 uppercase ml-2">
+                Founding
+              </span>
+            ) : null}
+          </h1>
           <p className="text-sm text-brand-muted mb-8">{form.cohort} · {form.currentRole}</p>
 
           {form.embedding.length === 0 ? (

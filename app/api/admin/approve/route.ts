@@ -125,6 +125,7 @@ export async function POST(request: NextRequest) {
         onboardingComplete: true,
         celebrationShown: false,
         hiddenFromFeed: false,
+        isFoundingMember: true,
         approvedAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
       },

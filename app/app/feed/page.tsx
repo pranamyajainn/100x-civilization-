@@ -34,6 +34,7 @@ interface UserProfile {
   isAdmin?: boolean;
   celebrationShown?: boolean;
   approvedAt?: { toMillis(): number } | null;
+  isFoundingMember?: boolean;
 }
 
 export default function FeedPage() {
@@ -436,7 +437,14 @@ export default function FeedPage() {
                   <div key={member.uid} className="border border-white/8 bg-white/[0.02] hover:border-white/20 transition-colors duration-300 p-6">
                     <div className="mb-5 flex items-start justify-between gap-4">
                       <div>
-                        <h3 className="text-xl font-display font-medium text-brand-white">{memberName}</h3>
+                        <h3 className="text-xl font-display font-medium text-brand-white">
+                          {memberName}
+                          {member.isFoundingMember ? (
+                            <span className="inline-block font-mono text-[8px] tracking-[0.2em] text-brand-neon border border-brand-neon/40 px-1.5 py-0.5 uppercase ml-2">
+                              Founding
+                            </span>
+                          ) : null}
+                        </h3>
                         <p className="mt-1 font-mono text-xs tracking-widest text-brand-muted">COHORT {memberCohort}</p>
                       </div>
                       {memberLinkedIn ? (

@@ -42,6 +42,7 @@ interface PosterContact {
   email: string;
   phone?: string;
   linkedinUrl?: string;
+  isFoundingMember?: boolean;
 }
 
 export default function PostDetailPage() {
@@ -116,6 +117,7 @@ export default function PostDetailPage() {
               email: posterData?.email ?? nextPost.contactEmail,
               phone: posterData?.phone ?? '',
               linkedinUrl: posterData?.linkedinUrl ?? '',
+              isFoundingMember: posterData?.isFoundingMember ?? false,
             });
           } catch (posterError) {
             console.error('[post-detail] poster fetch error:', posterError);
@@ -273,7 +275,14 @@ export default function PostDetailPage() {
               {post.posterName.charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="text-sm font-medium text-brand-white">{post.posterName}</p>
+              <p className="text-sm font-medium text-brand-white">
+                {post.posterName}
+                {posterContact?.isFoundingMember ? (
+                  <span className="inline-block font-mono text-[8px] tracking-[0.2em] text-brand-neon border border-brand-neon/40 px-1.5 py-0.5 uppercase ml-2">
+                    Founding
+                  </span>
+                ) : null}
+              </p>
               <p className="text-[11px] font-mono text-brand-muted">{post.posterCohort}</p>
             </div>
           </div>
