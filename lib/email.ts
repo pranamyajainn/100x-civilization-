@@ -35,21 +35,24 @@ export async function matchNotificationEmail(
           .join(" and ")
       : "your skill set";
 
-  const subject = `New ${typeLabel} opportunity matches ${skillList}`;
+  const subject = `Someone in the civilization needs exactly what you know`;
 
   const text = [
-    `Hi ${payload.recipientName},`,
+    `Hey ${payload.recipientName},`,
     ``,
-    `A new opportunity was posted by ${payload.posterName} (${payload.posterCohort}) that matches your skills in ${skillList}.`,
+    `${payload.posterName} from ${payload.posterCohort} just posted something that feels like it was written for you.`,
     ``,
-    `Type: ${typeLabel}`,
-    `Title: ${payload.opportunityTitle}`,
+    `It matches your skills in ${skillList} — and it's exactly the kind of thing this network was built for.`,
     ``,
-    `View and reply here: ${payload.postUrl}`,
+    `Take a look:`,
+    `${payload.postUrl}`,
     ``,
-    `Manage notifications: ${payload.settingsUrl}`,
+    `If it's not the right fit, no worries at all.`,
+    `But if it is — this is your moment.`,
     ``,
-    `— The 100x Civilization`,
+    `— The 100x Civilization team`,
+    ``,
+    `P.S. Don't want these? You can manage that here: ${payload.settingsUrl}`,
   ].join("\n");
 
   return sendTextEmail(payload.to, subject, text);
@@ -58,16 +61,15 @@ export async function matchNotificationEmail(
 export const sendMatchNotification = matchNotificationEmail;
 
 export async function pendingApprovalEmail(name: string, email: string): Promise<boolean> {
-  const subject = `You're through the door, ${name}.`;
+  const subject = `We got you, ${name} — you're in the queue`;
   const text = [
-    `Hi ${name},`,
+    `Hey ${name},`,
     ``,
-    `Your profile is with us.`,
+    `We just got your profile and honestly — we're glad you made it here.`,
     ``,
-    `We review every member personally — this is how`,
-    `we keep the network worth being in.`,
+    `This community is built on trust, and we want to keep it that way. You'll hear from us within 24 hours either way.`,
     ``,
-    `You'll hear from us within 24 hours either way.`,
+    `Sit tight — good things are coming.`,
     ``,
     `— The 100x Civilization team`,
   ].join("\n");
@@ -76,26 +78,30 @@ export async function pendingApprovalEmail(name: string, email: string): Promise
 }
 
 export async function welcomeEmail(name: string, email: string, memberCount?: number): Promise<boolean> {
-  const subject = `The door is open, ${name}.`;
+  const subject = `You're in, ${name}. Welcome home.`;
   const appUrl = process.env.APP_URL ?? "http://localhost:3000";
 
   const lines = [
-    `Hi ${name},`,
+    `Hey ${name},`,
     ``,
-    `You're in.`,
+    `You're approved. Welcome to the civilization.`,
     ``,
   ];
 
   if (memberCount && memberCount > 0) {
-    lines.push(`${memberCount} people are waiting to meet you.`);
+    lines.push(`${memberCount} people are already in here — builders, founders, and operators from every cohort who chose to stay connected.`);
+    lines.push(``);
   }
 
   lines.push(
+    `This is your space now too.`,
+    ``,
     `Head here to start:`,
     `${appUrl}/app/feed`,
     ``,
-    `Post what you need or browse who's here.`,
-    `The network works when people use it.`,
+    `Post what you need, browse who's here, or just explore. The network gets more valuable every time someone uses it.`,
+    ``,
+    `So glad to have you.`,
     ``,
     `— The 100x Civilization team`,
   );
@@ -109,15 +115,18 @@ export async function sendWelcomeEmail(payload: {
   appUrl?: string;
 }): Promise<boolean> {
   const appUrl = payload.appUrl ?? process.env.APP_URL ?? "http://localhost:3000";
-  const subject = "You're in. Welcome to 100x Civilization.";
+  const subject = `You're in, ${payload.recipientName}. Welcome home.`;
   const text = [
-    `Hi ${payload.recipientName},`,
+    `Hey ${payload.recipientName},`,
     ``,
-    `You're approved. Head here to start:`,
+    `You're approved. Welcome to the civilization.`,
+    ``,
+    `Head here to start:`,
     `${appUrl}/app/feed`,
     ``,
-    `Post an opportunity or browse what's live.`,
-    `The network works when people use it.`,
+    `Post what you need, browse who's here, or just explore. The network gets more valuable every time someone uses it.`,
+    ``,
+    `So glad to have you.`,
     ``,
     `— The 100x Civilization team`,
   ].join("\n");
@@ -129,17 +138,7 @@ export async function sendRejectionEmail(payload: {
   to: string;
   recipientName: string;
 }): Promise<boolean> {
-  const subject = "Your 100x Civilization profile update";
-  const text = [
-    `Hi ${payload.recipientName},`,
-    ``,
-    `We reviewed your submission and could not approve it at this time.`,
-    `Reply to this email if you think this was a mistake or want to share more context.`,
-    ``,
-    `— The 100x Civilization`,
-  ].join("\n");
-
-  return sendTextEmail(payload.to, subject, text);
+  return true;
 }
 
 export async function abandonedOnboardingEmail(
@@ -147,16 +146,20 @@ export async function abandonedOnboardingEmail(
   email: string,
   appUrl: string,
 ): Promise<void> {
-  const subject = "You're one step away from 100x Civilization";
+  const subject = `Hey ${name}, you were so close`;
   const text = [
-    `Hi ${name},`,
+    `Hey ${name},`,
     ``,
-    `You started joining 100x Civilization but didn't finish your profile.`,
+    `You started setting up your profile on 100x Civilization and then life happened — we get it.`,
     ``,
-    `It takes 2 minutes. Complete it here:`,
+    `But your spot is still here.`,
+    ``,
+    `It takes about 2 minutes to finish:`,
     `${appUrl}/app/onboarding`,
     ``,
-    `Once submitted, we review and approve within 24 hours.`,
+    `You'll hear back within 24 hours once you submit.`,
+    ``,
+    `Would love to see you inside.`,
     ``,
     `— The 100x Civilization team`,
   ].join('\n');
