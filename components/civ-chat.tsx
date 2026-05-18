@@ -15,6 +15,15 @@ const GREETING: Message = {
   text: "Hey, I'm Civ. Tell me what you're looking for and I'll find the right people in the network for you.",
 };
 
+const SUGGESTIONS = [
+  'Find me a content creator',
+  'Who can help with Meta ads?',
+  'Find a backend developer',
+];
+
+const FALLBACK =
+  "I'm having trouble searching right now. Try posting an opportunity and the right people will be notified directly.";
+
 export function CivChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([GREETING]);
@@ -27,12 +36,12 @@ export function CivChat() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  const handleSend = async () => {
-    const trimmed = input.trim();
-    if (!trimmed || loading) return;
+  const handleSend = async (overrideMessage?: string) => {
+    const messageToSend = (overrideMessage ?? input).trim();
+    if (!messageToSend || loading) return;
 
-    setMessages((prev) => [...prev, { role: 'user', text: trimmed }]);
-    setInput('');
+    setMessages((prev) => [...prev, { role: 'user', text: messageToSend }]);
+    if (!overrideMessage) setInput('');
     setLoading(true);
 
     try {
@@ -43,23 +52,14 @@ export function CivChat() {
           Authorization: `Bearer ${token ?? ''}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: trimmed }),
+        body: JSON.stringify({ message: messageToSend }),
       });
 
       const data = await res.json();
-      const reply: string =
-        data.reply ??
-        "I'm having trouble searching right now. Try posting an opportunity and the right people will be notified directly.";
-
+      const reply: string = data.reply ?? FALLBACK;
       setMessages((prev) => [...prev, { role: 'civ', text: reply }]);
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'civ',
-          text: "I'm having trouble searching right now. Try posting an opportunity and the right people will be notified directly.",
-        },
-      ]);
+      setMessages((prev) => [...prev, { role: 'civ', text: FALLBACK }]);
     } finally {
       setLoading(false);
     }
@@ -83,10 +83,10 @@ export function CivChat() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0, y: 16, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.97 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             className="fixed bottom-24 right-6 z-50 flex h-[480px] w-80 max-w-[calc(100vw-48px)] flex-col border border-white/10 bg-[#0a0a0a] shadow-2xl"
           >
             {/* Header */}
@@ -116,24 +116,61 @@ export function CivChat() {
                   <div
                     className={
                       msg.role === 'user'
-                        ? 'ml-8 border border-brand-neon/20 bg-brand-neon/10 p-3 text-sm text-brand-white'
-                        : 'mr-8 border border-white/8 bg-white/[0.03] p-3 text-sm text-brand-white'
+                        ? 'rounded-sm border border-brand-neon/30 bg-brand-neon/15 p-3 text-sm text-brand-white'
+                        : 'rounded-sm border border-white/10 bg-white/[0.04] p-3 text-sm text-brand-white'
                     }
                   >
                     {msg.text}
                   </div>
                 </div>
               ))}
-              {loading && (
-                <p className="animate-pulse font-mono text-xs text-brand-muted">
-                  CIV is searching...
-                </p>
+
+              {/* Suggestion buttons — only shown on greeting */}
+              {messages.length === 1 && !loading && (
+                <div className="flex flex-col gap-2 pb-1">
+                  {SUGGESTIONS.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      onClick={() => {
+                        setInput(suggestion);
+                        handleSend(suggestion);
+                      }}
+                      className="border border-white/10 px-3 py-2 text-left text-xs font-mono tracking-wide text-brand-muted transition-all duration-200 hover:border-brand-neon/40 hover:text-brand-white"
+                    >
+                      {suggestion} →
+                    </button>
+                  ))}
+                </div>
               )}
+
+              {/* Typing indicator */}
+              {loading && (
+                <div>
+                  <p className="mb-1 font-mono text-[9px] tracking-widest text-brand-muted">CIV</p>
+                  <div className="flex items-center gap-1 rounded-sm border border-white/10 bg-white/[0.04] p-3">
+                    <div className="flex h-4 items-center gap-1">
+                      <div
+                        className="h-1 w-1 animate-bounce rounded-full bg-brand-neon"
+                        style={{ animationDelay: '0ms' }}
+                      />
+                      <div
+                        className="h-1 w-1 animate-bounce rounded-full bg-brand-neon"
+                        style={{ animationDelay: '150ms' }}
+                      />
+                      <div
+                        className="h-1 w-1 animate-bounce rounded-full bg-brand-neon"
+                        style={{ animationDelay: '300ms' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div ref={bottomRef} />
             </div>
 
             {/* Input */}
-            <div className="flex-shrink-0 border-t border-white/8 p-3 flex items-center gap-2">
+            <div className="flex flex-shrink-0 items-center gap-2 border-t border-white/8 p-3">
               <input
                 type="text"
                 value={input}
@@ -149,7 +186,7 @@ export function CivChat() {
                 className="flex-1 bg-transparent font-mono text-xs text-brand-white placeholder-brand-muted outline-none"
               />
               <button
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={loading || !input.trim()}
                 aria-label="Send"
                 className="text-brand-neon transition-colors hover:text-brand-white disabled:opacity-40"
