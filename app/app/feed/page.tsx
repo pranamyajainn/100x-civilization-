@@ -19,6 +19,7 @@ import { PostCard, PostData } from '@/components/post-card';
 import { PostForm } from '@/components/post-form';
 import { scoreFeedRelevance } from '@/lib/matching';
 import { ActivityTicker } from '@/components/activity-ticker';
+import { CivChat } from '@/components/civ-chat';
 
 interface UserProfile {
   uid: string;
@@ -503,6 +504,8 @@ export default function FeedPage() {
           posterEmail={profileEmail}
         />
       ) : null}
+
+      <CivChat />
     </div>
   );
 }
