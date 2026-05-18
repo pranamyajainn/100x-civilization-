@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
     const email = typeof body.email === 'string' ? body.email.trim() : '';
     const phone = typeof body.phone === 'string' ? body.phone.replace(/\D/g, '') : '';
     const cohort = typeof body.cohort === 'string' ? body.cohort : '';
+    const currentRole = typeof body.currentRole === 'string' ? body.currentRole.trim() : '';
     const linkedinUrl = normalizeLinkedInUrl(typeof body.linkedinUrl === 'string' ? body.linkedinUrl : '');
     const rawSkillTags = Array.isArray(body.skillTags) ? (body.skillTags as unknown[]) : [];
     const skillTags = rawSkillTags
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email mismatch.' }, { status: 400 });
     }
 
-    if (!/^\d{10,15}$/.test(phone)) {
+    if (!/^\d{7,15}$/.test(phone)) {
       return NextResponse.json({ error: 'Phone number is invalid.' }, { status: 400 });
     }
 
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
       fullName,
       phone,
       cohort,
+      currentRole,
       linkedinUrl,
       skillTags,
       certificateUrl,
