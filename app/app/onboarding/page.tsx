@@ -292,7 +292,7 @@ export default function OnboardingPage() {
                 ) : null}
                 <label className="text-[10px] font-mono uppercase tracking-wider text-brand-muted">YOUR EXPERTISE (MINIMUM 3)</label>
                 <p className="text-xs font-mono text-brand-muted tracking-wider mb-2">
-                  Add your domain first — marketing, fintech, D2C, edtech — then your technical skills
+                  Add at least 3 skills. Type anything and press Enter, or pick from suggestions.
                 </p>
                 <SkillTagInput
                   value={form.skillTags}
