@@ -22,10 +22,12 @@ export default function PendingPage() {
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState('');
+  const [stillPending, setStillPending] = useState(false);
 
   const loadStatus = async (currentUser: User, options?: { silent?: boolean }) => {
     if (!options?.silent) {
       setChecking(true);
+      setStillPending(false);
     }
     setError('');
 
@@ -64,6 +66,7 @@ export default function PendingPage() {
       setLoading(false);
       if (!options?.silent) {
         setChecking(false);
+        setStillPending(true);
       }
     }
   };
@@ -155,6 +158,9 @@ export default function PendingPage() {
             Sign out and come back later
           </button>
         </div>
+        {stillPending && !checking ? (
+          <p className="mt-3 font-mono text-xs text-brand-muted">Still under review. Check back soon.</p>
+        ) : null}
       </div>
     </main>
   );
