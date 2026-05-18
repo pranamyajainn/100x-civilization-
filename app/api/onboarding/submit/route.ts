@@ -4,7 +4,6 @@ import { verifyIdToken } from '@/lib/auth-middleware';
 import { pendingApprovalEmail } from '@/lib/email';
 import { adminDb } from '@/lib/firebase-admin';
 import { checkRateLimit, getRequestIp } from '@/lib/rate-limit';
-import { isValidSkill } from '@/lib/taxonomy';
 
 export const runtime = 'nodejs';
 
@@ -63,12 +62,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'LinkedIn URL is invalid.' }, { status: 400 });
     }
 
-    if (skillTags.length < 5 || skillTags.length > MAX_SKILL_TAGS) {
-      return NextResponse.json({ error: 'Skill tags must contain between 5 and 20 items.' }, { status: 400 });
-    }
-
-    if (!skillTags.every((tag) => isValidSkill(tag))) {
-      return NextResponse.json({ error: 'Invalid skill tags.' }, { status: 400 });
+    if (skillTags.length < 3 || skillTags.length > MAX_SKILL_TAGS) {
+      return NextResponse.json({ error: 'Skill tags must contain between 3 and 20 items.' }, { status: 400 });
     }
 
     const pendingUser = {
