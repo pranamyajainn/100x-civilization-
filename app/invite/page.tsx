@@ -8,12 +8,31 @@ import { auth, db } from '@/lib/firebase';
 import { clearSessionCookies, setSessionCookies } from '@/lib/client-session';
 import { motion } from 'motion/react';
 
+const SIGN_IN_URL = 'https://100xcivilization.live/invite';
+
+function isInAppBrowser(): boolean {
+  const ua = navigator.userAgent || '';
+  return (
+    /FBAN|FBAV|Instagram|LinkedIn|WhatsApp|Snapchat|Twitter|TikTok|Line|WeChat|MicroMessenger|GSA|YaBrowser/.test(ua) ||
+    (/iPhone|iPod|iPad/.test(ua) && !/Safari/.test(ua)) ||
+    (/Android/.test(ua) && !/Chrome/.test(ua) && !/Firefox/.test(ua))
+  );
+}
+
 export default function InviteSignInPage() {
   const router = useRouter();
   const [error, setError] = useState('');
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [showInterstitial, setShowInterstitial] = useState(false);
   const [memberNumber, setMemberNumber] = useState(0);
+  const [inAppBrowser] = useState(() => typeof navigator !== 'undefined' && isInAppBrowser());
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(SIGN_IN_URL).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   async function handleGoogleSignIn() {
     setError('');
@@ -150,28 +169,56 @@ export default function InviteSignInPage() {
           Sign in with Google, complete onboarding, and wait for approval.
         </p>
 
-        {error && (
-          <div className="mb-5 p-3 border border-red-500/40 bg-red-500/10 text-red-400 text-sm">
-            {error}
+        {inAppBrowser ? (
+          <div className="border border-brand-border bg-black/40 p-6">
+            <p className="text-sm font-medium text-brand-white mb-2">Open in your browser to sign in</p>
+            <p className="text-xs text-brand-muted leading-relaxed mb-5">
+              Google sign-in does not work inside WhatsApp, Instagram, or other apps.
+              Copy this link and open it in Chrome or Safari:
+            </p>
+            <p className="font-mono text-xs text-brand-neon break-all mb-5">{SIGN_IN_URL}</p>
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="w-full flex items-center justify-center bg-brand-neon text-brand-black text-sm font-bold uppercase tracking-widest py-3 transition hover:bg-[#FF6A26] mb-4"
+            >
+              {copied ? 'Copied ✓' : 'Copy link'}
+            </button>
+            <a
+              href={SIGN_IN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-center text-xs font-mono text-brand-muted hover:text-brand-white transition-colors"
+            >
+              Open in browser →
+            </a>
           </div>
+        ) : (
+          <>
+            {error && (
+              <div className="mb-5 p-3 border border-red-500/40 bg-red-500/10 text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+
+            <div className="w-full flex justify-center">
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={isSigningIn}
+                className="w-full flex items-center justify-center gap-3 border border-brand-white/20 bg-brand-white text-brand-black px-5 py-3 text-sm font-medium transition hover:bg-brand-neon disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <GoogleIcon />
+                {isSigningIn ? 'Opening Google...' : 'Continue with Google'}
+              </button>
+            </div>
+
+            <p className="mt-6 text-[10px] font-mono text-brand-muted text-center leading-relaxed">
+              For 100xEngineers alumni only.<br />
+              Access is enabled after admin approval.
+            </p>
+          </>
         )}
-
-        <div className="w-full flex justify-center">
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={isSigningIn}
-            className="w-full flex items-center justify-center gap-3 border border-brand-white/20 bg-brand-white text-brand-black px-5 py-3 text-sm font-medium transition hover:bg-brand-neon disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <GoogleIcon />
-            {isSigningIn ? 'Opening Google...' : 'Continue with Google'}
-          </button>
-        </div>
-
-        <p className="mt-6 text-[10px] font-mono text-brand-muted text-center leading-relaxed">
-          For 100xEngineers alumni only.<br />
-          Access is enabled after admin approval.
-        </p>
       </motion.div>
     </main>
     </>
