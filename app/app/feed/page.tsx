@@ -53,6 +53,7 @@ export default function FeedPage() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationProfile, setCelebrationProfile] = useState<UserProfile | null>(null);
   const [celebrationSaving, setCelebrationSaving] = useState(false);
+  const [showAllMembers, setShowAllMembers] = useState(false);
 
   const loadMembers = useCallback(async (currentUserId: string) => {
     setMembersLoading(true);
@@ -425,8 +426,9 @@ export default function FeedPage() {
               No other approved members are visible yet.
             </div>
           ) : (
+            <>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {members.map((member) => {
+              {(showAllMembers ? members : members.slice(0, 4)).map((member) => {
                 const memberName = safeText(member.fullName, safeText(member.email, 'Member'));
                 const memberCohort = safeText(member.cohort, '100x alum');
                 const memberSkills = Array.isArray(member.skillTags) ? member.skillTags : [];
@@ -493,6 +495,15 @@ export default function FeedPage() {
                 );
               })}
             </div>
+            {members.length > 4 ? (
+              <button
+                onClick={() => setShowAllMembers(prev => !prev)}
+                className="mt-6 w-full font-mono text-xs tracking-widest text-brand-muted border border-white/10 py-3 hover:border-white/20 hover:text-brand-white transition-all duration-200"
+              >
+                {showAllMembers ? 'Show less ↑' : `See all ${members.length} members →`}
+              </button>
+            ) : null}
+            </>
           )}
         </section>
       </main>
