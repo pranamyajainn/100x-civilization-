@@ -72,7 +72,16 @@ export function PostForm({ isOpen, onClose, posterUid, posterName, posterCohort,
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
+    // Block wheel events at the document level so macOS trackpad momentum
+    // scroll cannot reach the background feed. Events originating inside
+    // the scrollable content div escape this via stopPropagation before
+    // reaching the document, so modal content still scrolls normally.
+    const blockWheel = (e: WheelEvent) => e.preventDefault();
+    document.addEventListener('wheel', blockWheel, { passive: false });
+    return () => {
+      document.body.style.overflow = '';
+      document.removeEventListener('wheel', blockWheel);
+    };
   }, []);
 
   const set = <K extends keyof FormState>(key: K, val: FormState[K]) =>
@@ -213,7 +222,7 @@ export function PostForm({ isOpen, onClose, posterUid, posterName, posterCohort,
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto overscroll-contain min-h-0 p-6">
+            <div className="flex-1 overflow-y-auto overscroll-contain min-h-0 p-6" onWheel={(e) => e.stopPropagation()}>
               {/* Step 1: Type selector */}
               {step === 'type' && (
                 <div className="flex flex-col gap-3">
