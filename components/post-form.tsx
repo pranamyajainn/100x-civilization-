@@ -72,24 +72,27 @@ export function PostForm({ isOpen, onClose, posterUid, posterName, posterCohort,
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!isOpen) return;
     const el = scrollRef.current;
     if (!el) return;
-
     const onWheel = (e: WheelEvent) => {
       const atTop = el.scrollTop === 0;
-      const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight;
-      const scrollingUp = e.deltaY < 0;
-      const scrollingDown = e.deltaY > 0;
-
-      if ((atTop && scrollingUp) || (atBottom && scrollingDown)) {
+      const atBottom =
+        el.scrollTop + el.clientHeight >=
+        el.scrollHeight;
+      if (
+        (atTop && e.deltaY < 0) ||
+        (atBottom && e.deltaY > 0)
+      ) {
         e.preventDefault();
       }
       e.stopPropagation();
     };
-
-    el.addEventListener('wheel', onWheel, { passive: false });
-    return () => el.removeEventListener('wheel', onWheel);
-  }, []);
+    el.addEventListener('wheel', onWheel,
+      { passive: false });
+    return () =>
+      el.removeEventListener('wheel', onWheel);
+  }, [isOpen]);
 
   const set = <K extends keyof FormState>(key: K, val: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: val }));
