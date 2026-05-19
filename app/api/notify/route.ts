@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      await new Promise(res => setTimeout(res, 150));
+      await new Promise(res => setTimeout(res, 600));
     }
 
     if (matches.length > 0 && sent < matches.length) {
