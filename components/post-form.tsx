@@ -8,7 +8,7 @@
  * triggers /api/notify for match notifications.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Loader2 } from 'lucide-react';
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -69,6 +69,11 @@ export function PostForm({ isOpen, onClose, posterUid, posterName, posterCohort,
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [warningMsg, setWarningMsg] = useState('');
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
 
   const set = <K extends keyof FormState>(key: K, val: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: val }));
@@ -194,7 +199,7 @@ export function PostForm({ isOpen, onClose, posterUid, posterName, posterCohort,
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 z-50 max-h-[90vh] w-full max-w-lg overflow-y-auto overscroll-contain border-l border-brand-border bg-black"
+            className="fixed right-0 top-0 z-50 h-dvh w-full max-w-lg flex flex-col border-l border-brand-border bg-black"
           >
             {/* Header */}
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-brand-border bg-black px-6 py-4">
@@ -211,7 +216,7 @@ export function PostForm({ isOpen, onClose, posterUid, posterName, posterCohort,
               </button>
             </div>
 
-            <div className="p-6">
+            <div className="flex-1 overflow-y-auto overscroll-contain min-h-0 p-6">
               {/* Step 1: Type selector */}
               {step === 'type' && (
                 <div className="flex flex-col gap-3">
