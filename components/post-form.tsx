@@ -8,7 +8,7 @@
  * triggers /api/notify for match notifications.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Loader2 } from 'lucide-react';
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -69,19 +69,26 @@ export function PostForm({ isOpen, onClose, posterUid, posterName, posterCohort,
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [warningMsg, setWarningMsg] = useState('');
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    // Block wheel events at the document level so macOS trackpad momentum
-    // scroll cannot reach the background feed. Events originating inside
-    // the scrollable content div escape this via stopPropagation before
-    // reaching the document, so modal content still scrolls normally.
-    const blockWheel = (e: WheelEvent) => e.preventDefault();
-    document.addEventListener('wheel', blockWheel, { passive: false });
-    return () => {
-      document.body.style.overflow = '';
-      document.removeEventListener('wheel', blockWheel);
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const onWheel = (e: WheelEvent) => {
+      const atTop = el.scrollTop === 0;
+      const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight;
+      const scrollingUp = e.deltaY < 0;
+      const scrollingDown = e.deltaY > 0;
+
+      if ((atTop && scrollingUp) || (atBottom && scrollingDown)) {
+        e.preventDefault();
+      }
+      e.stopPropagation();
     };
+
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
   }, []);
 
   const set = <K extends keyof FormState>(key: K, val: FormState[K]) =>
@@ -222,7 +229,7 @@ export function PostForm({ isOpen, onClose, posterUid, posterName, posterCohort,
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto overscroll-contain min-h-0 p-6" onWheel={(e) => e.stopPropagation()}>
+            <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain min-h-0 p-6">
               {/* Step 1: Type selector */}
               {step === 'type' && (
                 <div className="flex flex-col gap-3">
