@@ -103,38 +103,38 @@ export async function POST(req: NextRequest) {
     const appUrl = process.env.APP_URL ?? "http://localhost:3000";
     let sent = 0;
 
-    await Promise.all(
-      matches.map(async (match) => {
-        const success = await sendMatchNotification({
-          to: match.email,
-          recipientName: match.fullName,
-          posterName: post.posterName ?? "",
-          posterCohort: post.posterCohort ?? "",
-          opportunityType: post.type ?? "",
-          opportunityTitle: post.title ?? "",
-          matchedSkills: match.matchedSkills,
-          postUrl: `${appUrl}/app/posts/${postId}`,
-          settingsUrl: `${appUrl}/app/profile`,
-        });
+    for (const match of matches) {
+      const success = await sendMatchNotification({
+        to: match.email,
+        recipientName: match.fullName,
+        posterName: post.posterName ?? "",
+        posterCohort: post.posterCohort ?? "",
+        opportunityType: post.type ?? "",
+        opportunityTitle: post.title ?? "",
+        matchedSkills: match.matchedSkills,
+        postUrl: `${appUrl}/app/posts/${postId}`,
+        settingsUrl: `${appUrl}/app/profile`,
+      });
 
-        if (success) {
-          sent++;
-          const notifId = `${match.uid}_${postId}`;
-          await adminDb.collection("notifications").doc(notifId).set({
-            uid: match.uid,
-            email: match.email,
-            postId,
-            postType: post.type ?? "",
-            postTitle: post.title ?? "",
-            posterUid: authUser.uid,
-            posterCohort: post.posterCohort ?? "",
-            sentAt: FieldValue.serverTimestamp(),
-            replied: false,
-            isSeedData: false,
-          });
-        }
-      })
-    );
+      if (success) {
+        sent++;
+        const notifId = `${match.uid}_${postId}`;
+        await adminDb.collection("notifications").doc(notifId).set({
+          uid: match.uid,
+          email: match.email,
+          postId,
+          postType: post.type ?? "",
+          postTitle: post.title ?? "",
+          posterUid: authUser.uid,
+          posterCohort: post.posterCohort ?? "",
+          sentAt: FieldValue.serverTimestamp(),
+          replied: false,
+          isSeedData: false,
+        });
+      }
+
+      await new Promise(res => setTimeout(res, 150));
+    }
 
     if (matches.length > 0 && sent < matches.length) {
       warnings.push("Some match notification emails could not be delivered.");
