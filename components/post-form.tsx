@@ -190,16 +190,16 @@ export function PostForm({ isOpen, onClose, posterUid, posterName, posterCohort,
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.97 }}
           transition={{ duration: 0.15, ease: 'easeOut' }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
           onClick={handleClose}
         >
           {/* Modal panel */}
           <div
-            className="w-full max-w-2xl bg-black border border-brand-border flex flex-col h-[90vh] max-h-[90vh]"
+            className="w-full max-w-2xl bg-black border border-brand-border flex flex-col h-[85vh]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-brand-border bg-black px-6 py-4">
+            <div className="flex-shrink-0 sticky top-0 z-10 flex items-center justify-between border-b border-brand-border bg-black px-6 py-4">
               <div>
                 <p className="text-[10px] font-mono uppercase tracking-widest text-brand-muted">
                   {step === 'type' ? 'New Opportunity' : `${POST_TYPES.find(t => t.value === form.type)?.label ?? ''}`}
@@ -356,20 +356,6 @@ export function PostForm({ isOpen, onClose, posterUid, posterName, posterCohort,
                     </span>
                   </label>
 
-                  {/* Submit */}
-                  <div className="sticky bottom-0 bg-black pt-4">
-                    <button
-                      onClick={handleSubmit}
-                      disabled={status === 'loading'}
-                      className="flex w-full min-h-[44px] items-center justify-center gap-2 bg-brand-neon py-4 font-bold uppercase tracking-widest text-brand-black transition-all hover:bg-[#FF6A26] disabled:opacity-60"
-                    >
-                      {status === 'loading' ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      ) : (
-                        'Post Opportunity'
-                      )}
-                    </button>
-                  </div>
                 </div>
               )}
 
@@ -405,6 +391,23 @@ export function PostForm({ isOpen, onClose, posterUid, posterName, posterCohort,
                 </motion.div>
               )}
             </div>
+
+            {/* Submit — outside scrollable div, always anchored to bottom of modal */}
+            {step === 'details' && status !== 'success' && (
+              <div className="flex-shrink-0 p-4 border-t border-brand-border bg-black">
+                <button
+                  onClick={handleSubmit}
+                  disabled={status === 'loading'}
+                  className="flex w-full min-h-[44px] items-center justify-center gap-2 bg-brand-neon py-4 font-bold uppercase tracking-widest text-brand-black transition-all hover:bg-[#FF6A26] disabled:opacity-60"
+                >
+                  {status === 'loading' ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    'Post Opportunity'
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         </motion.div>
       )}
