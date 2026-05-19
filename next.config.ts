@@ -108,7 +108,17 @@ const nextConfig: NextConfig = {
 };
 
 import withBundleAnalyzer from '@next/bundle-analyzer';
+import { withSentryConfig } from '@sentry/nextjs';
 
-export default withBundleAnalyzer({
+const analyzedConfig = withBundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 })(nextConfig);
+
+export default withSentryConfig(analyzedConfig, {
+  org: "sahajta-ai",
+  project: "javascript-nextjs",
+  silent: true,
+  disableLogger: true,
+  tunnelRoute: "/monitoring",
+  sourcemaps: { disable: true },
+});
