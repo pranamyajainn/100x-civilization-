@@ -119,6 +119,5 @@ export default withSentryConfig(analyzedConfig, {
   project: "javascript-nextjs",
   silent: true,
   disableLogger: true,
-  tunnelRoute: "/monitoring",
   sourcemaps: { disable: true },
 });
