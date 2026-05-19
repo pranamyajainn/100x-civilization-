@@ -185,21 +185,18 @@ export function PostForm({ isOpen, onClose, posterUid, posterName, posterCohort,
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40"
-            onClick={handleClose}
-          />
-
-          {/* Panel */}
-          <motion.div
-            initial={{ opacity: 0, x: '100%' }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 z-50 h-dvh w-full max-w-lg flex flex-col border-l border-brand-border bg-black"
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.97 }}
+          transition={{ duration: 0.15, ease: 'easeOut' }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          onClick={handleClose}
+        >
+          {/* Modal panel */}
+          <div
+            className="w-full max-w-2xl bg-black border border-brand-border flex flex-col h-[90vh] max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-brand-border bg-black px-6 py-4">
@@ -408,8 +405,8 @@ export function PostForm({ isOpen, onClose, posterUid, posterName, posterCohort,
                 </motion.div>
               )}
             </div>
-          </motion.div>
-        </>
+          </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );
