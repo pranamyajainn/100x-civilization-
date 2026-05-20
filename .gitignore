@@ -7,3 +7,5 @@ coverage/
 !.env.example
 .vercel
 .env.local
+scripts/export-users.ts
+users-export.csv
