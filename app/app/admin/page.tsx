@@ -23,8 +23,6 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
   Cell,
   LineChart,
   Line,
@@ -81,13 +79,24 @@ function toExternalUrl(value: string): string {
 }
 
 /* ─── Chart colors ──────────────────────────────── */
-const NEON = '#FF4F00';
-const NEON2 = '#FF6A26';
+const COLORS = {
+  primary: '#FF4F00',
+  secondary: '#FF8C42',
+  tertiary: '#FFB347',
+  accent1: '#6EE7B7',
+  accent2: '#93C5FD',
+  accent3: '#C4B5FD',
+  accent4: '#FCA5A5',
+  grid: '#1a1a1a',
+  tooltip_bg: '#050505',
+  tooltip_border: '#2a2a2a',
+};
+
 const COHORT_COLORS = [
-  '#FF4F00','#FF6A26','#FFB347','#50FA7B',
-  '#8BE9FD','#BD93F9','#FF79C6','#F1FA8C',
+  '#FF4F00', '#FF8C42', '#FFB347',
+  '#6EE7B7', '#93C5FD', '#C4B5FD',
+  '#FCA5A5',
 ];
-const PIE_COLORS = ['#FF4F00','#2a2a2a'];
 
 /* ─── Animated counter ──────────────────────────── */
 function AnimatedNumber({ value }: { value: number }) {
@@ -122,13 +131,9 @@ export default function AdminPage() {
   const [actionNotice, setActionNotice] = useState('');
 
   /* counts */
-  const [usersCount, setUsersCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const [notificationsCount, setNotificationsCount] = useState(0);
   const [connectionsCount, setConnectionsCount] = useState(0);
-  const [waitlistCount, setWaitlistCount] = useState(0);
-  const [incompleteCount, setIncompleteCount] = useState(0);
-
   /* pending table */
   const [pendingUsers, setPendingUsers] = useState<PendingUserRow[]>([]);
   const [pendingLoading, setPendingLoading] = useState(true);
@@ -159,16 +164,10 @@ export default function AdminPage() {
        zero document reads, no data exposure */
     const fetchCounts = async () => {
       try {
-        const [uc, wc, ic, nc, cc] = await Promise.all([
-          getCountFromServer(collection(db, 'users')),
-          getCountFromServer(collection(db, 'waitlist_signups')),
-          getCountFromServer(collection(db, 'incomplete_signups')),
+        const [nc, cc] = await Promise.all([
           getCountFromServer(collection(db, 'notifications')),
           getCountFromServer(collection(db, 'connections')),
         ]);
-        setUsersCount(uc.data().count);
-        setWaitlistCount(wc.data().count);
-        setIncompleteCount(ic.data().count);
         setNotificationsCount(nc.data().count);
         setConnectionsCount(cc.data().count);
       } catch (e) {
@@ -241,6 +240,8 @@ export default function AdminPage() {
     };
   }, [authorized]);
 
+  const usersCount = approvedUsers.length;
+
   /* ─── Chart data derivations ─────────────────── */
   const cohortData = useMemo(() => {
     const map: Record<string, number> = {};
@@ -251,15 +252,6 @@ export default function AdminPage() {
     return Object.entries(map)
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([cohort, count]) => ({ cohort, count }));
-  }, [approvedUsers]);
-
-  const certData = useMemo(() => {
-    const withCert = approvedUsers.filter((u) => u.certificateUrl).length;
-    const without = approvedUsers.length - withCert;
-    return [
-      { name: 'Verified', value: withCert },
-      { name: 'Unverified', value: without },
-    ];
   }, [approvedUsers]);
 
   const skillData = useMemo(() => {
@@ -279,7 +271,14 @@ export default function AdminPage() {
   const roleData = useMemo(() => {
     const map: Record<string, number> = {};
     approvedUsers.forEach((u) => {
-      if (u.currentRole) map[u.currentRole] = (map[u.currentRole] ?? 0) + 1;
+      if (u.currentRole) {
+        const normalized = u.currentRole
+          .trim()
+          .replace(/\bai\b/gi, 'AI')
+          .replace(/\bml\b/gi, 'ML')
+          .replace(/\bllm\b/gi, 'LLM');
+        map[normalized] = (map[normalized] ?? 0) + 1;
+      }
     });
     return Object.entries(map)
       .sort((a, b) => b[1] - a[1])
@@ -394,23 +393,24 @@ export default function AdminPage() {
           <p className="text-[10px] font-mono tracking-[0.2em] text-brand-muted uppercase mb-4">
             Live Network Stats
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {[
               { label: 'Alumni', value: usersCount, accent: true },
               { label: 'Pending', value: pendingCount, accent: false },
-              { label: 'Waitlist', value: waitlistCount, accent: false },
               { label: 'Connections', value: connectionsCount, accent: false },
               { label: 'Notifications', value: notificationsCount, accent: false },
-              { label: 'Incomplete', value: incompleteCount, accent: false },
             ].map(({ label, value, accent }) => (
               <div key={label}
-                className={`border ${accent ? 'border-brand-neon/40 bg-brand-neon/5' : 'border-brand-border bg-black/40'} p-4 flex flex-col gap-1`}>
-                <span className={`text-3xl font-display font-bold ${accent ? 'text-brand-neon' : 'text-brand-white'}`}>
+                className={`relative overflow-hidden border ${accent ? 'border-orange-500/30 bg-gradient-to-br from-orange-500/10 to-transparent' : 'border-white/5 bg-white/[0.02]'} p-5 flex flex-col gap-2`}>
+                <span className={`text-4xl font-mono font-bold tracking-tight ${accent ? 'text-orange-400' : 'text-white'}`}>
                   <AnimatedNumber value={value} />
                 </span>
-                <span className="text-[10px] font-mono text-brand-muted uppercase tracking-wider">
+                <span className="text-[10px] font-mono text-white/30 uppercase tracking-[0.2em]">
                   {label}
                 </span>
+                {accent && (
+                  <div className="absolute top-3 right-3 w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+                )}
               </div>
             ))}
           </div>
@@ -433,21 +433,21 @@ export default function AdminPage() {
             ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={growthData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#222" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
                   <XAxis dataKey="date" tick={{ fill: '#555', fontSize: 10 }} />
                   <YAxis tick={{ fill: '#555', fontSize: 10 }} />
                   <Tooltip
-                    contentStyle={{ background: '#0a0a0a', border: '1px solid #333', borderRadius: 0 }}
+                    contentStyle={{ background: COLORS.tooltip_bg, border: `1px solid ${COLORS.tooltip_border}`, borderRadius: 0 }}
                     labelStyle={{ color: '#aaa', fontSize: 11 }}
-                    itemStyle={{ color: NEON }}
+                    itemStyle={{ color: COLORS.primary }}
                   />
                   <Line
                     type="monotone"
                     dataKey="count"
-                    stroke={NEON}
+                    stroke={COLORS.primary}
                     strokeWidth={2}
-                    dot={{ fill: NEON, r: 3 }}
-                    activeDot={{ r: 5, fill: NEON2 }}
+                    dot={{ fill: COLORS.primary, r: 3 }}
+                    activeDot={{ r: 5, fill: COLORS.secondary }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -468,9 +468,9 @@ export default function AdminPage() {
                   <XAxis dataKey="cohort" tick={{ fill: '#555', fontSize: 11 }} />
                   <YAxis tick={{ fill: '#555', fontSize: 11 }} />
                   <Tooltip
-                    contentStyle={{ background: '#0a0a0a', border: '1px solid #333', borderRadius: 0 }}
+                    contentStyle={{ background: COLORS.tooltip_bg, border: `1px solid ${COLORS.tooltip_border}`, borderRadius: 0 }}
                     labelStyle={{ color: '#aaa', fontSize: 11 }}
-                    itemStyle={{ color: NEON }}
+                    itemStyle={{ color: COLORS.primary }}
                     cursor={{ fill: 'rgba(255,79,0,0.05)' }}
                   />
                   <Bar dataKey="count" radius={[2, 2, 0, 0]}>
@@ -505,11 +505,11 @@ export default function AdminPage() {
                     tick={{ fill: '#888', fontSize: 10 }}
                   />
                   <Tooltip
-                    contentStyle={{ background: '#0a0a0a', border: '1px solid #333', borderRadius: 0 }}
-                    itemStyle={{ color: NEON }}
+                    contentStyle={{ background: COLORS.tooltip_bg, border: `1px solid ${COLORS.tooltip_border}`, borderRadius: 0 }}
+                    itemStyle={{ color: COLORS.primary }}
                     cursor={{ fill: 'rgba(255,79,0,0.05)' }}
                   />
-                  <Bar dataKey="count" fill={NEON} radius={[0, 2, 2, 0]} />
+                  <Bar dataKey="count" fill={COLORS.primary} radius={[0, 2, 2, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -517,44 +517,37 @@ export default function AdminPage() {
 
           <div className="border border-brand-border bg-black/40 p-6 flex flex-col">
             <p className="text-[10px] font-mono tracking-[0.2em] text-brand-muted uppercase mb-6">
-              Certificate Verification
+              Cohort Breakdown
             </p>
             {chartsLoading ? (
               <div className="flex-1 flex items-center justify-center">
                 <Loader2 className="w-4 h-4 animate-spin text-brand-neon" />
               </div>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center gap-4">
-                <ResponsiveContainer width="100%" height={160}>
-                  <PieChart>
-                    <Pie
-                      data={certData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={45}
-                      outerRadius={70}
-                      paddingAngle={3}
-                      dataKey="value"
-                    >
-                      {certData.map((_, i) => (
-                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{ background: '#0a0a0a', border: '1px solid #333', borderRadius: 0 }}
-                      itemStyle={{ color: NEON }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="flex gap-4 text-xs font-mono">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-brand-neon inline-block" />
-                    <span className="text-brand-muted">Verified {certData[0]?.value ?? 0}</span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#2a2a2a] border border-[#444] inline-block" />
-                    <span className="text-brand-muted">Unverified {certData[1]?.value ?? 0}</span>
-                  </span>
+              <div className="flex-1 flex flex-col justify-center gap-6">
+                <div>
+                  <div className="text-5xl font-mono font-bold text-white tracking-tight">
+                    {usersCount}
+                  </div>
+                  <div className="text-[10px] font-mono text-white/30 uppercase tracking-[0.2em] mt-1">
+                    Total Alumni
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {[...cohortData]
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 3)
+                    .map(({ cohort, count }, i) => (
+                      <div key={cohort} className="flex items-center justify-between">
+                        <span className="text-sm font-mono text-white/60">{cohort}</span>
+                        <span
+                          className="text-sm font-mono font-bold"
+                          style={{ color: COHORT_COLORS[i % COHORT_COLORS.length] }}
+                        >
+                          {count} members
+                        </span>
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
@@ -581,11 +574,11 @@ export default function AdminPage() {
                   tick={{ fill: '#888', fontSize: 10 }}
                 />
                 <Tooltip
-                  contentStyle={{ background: '#0a0a0a', border: '1px solid #333', borderRadius: 0 }}
-                  itemStyle={{ color: NEON2 }}
+                  contentStyle={{ background: COLORS.tooltip_bg, border: `1px solid ${COLORS.tooltip_border}`, borderRadius: 0 }}
+                  itemStyle={{ color: COLORS.secondary }}
                   cursor={{ fill: 'rgba(255,79,0,0.05)' }}
                 />
-                <Bar dataKey="count" fill={NEON2} radius={[0, 2, 2, 0]} />
+                <Bar dataKey="count" fill={COLORS.secondary} radius={[0, 2, 2, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
