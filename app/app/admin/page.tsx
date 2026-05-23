@@ -24,8 +24,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   CartesianGrid,
 } from 'recharts';
 
@@ -78,27 +78,54 @@ function toExternalUrl(value: string): string {
   return `https://${value}`;
 }
 
-/* ─── Chart colors ──────────────────────────────── */
+/* ─── Design system ─────────────────���────────────── */
+
 const COLORS = {
-  primary: '#FF4F00',
-  secondary: '#FF8C42',
-  tertiary: '#FFB347',
-  accent1: '#6EE7B7',
-  accent2: '#93C5FD',
-  accent3: '#C4B5FD',
-  accent4: '#FCA5A5',
-  grid: '#1a1a1a',
-  tooltip_bg: '#050505',
-  tooltip_border: '#2a2a2a',
+  bg: '#08090A',
+  surface: '#0E1011',
+  surfaceHover: '#141719',
+  border: '#1C2024',
+  borderBright: '#2A3036',
+  text: '#E6E8EA',
+  textDim: '#8B9398',
+  textFaint: '#4A5258',
+  accent: '#FF6B35',
+  accentBright: '#FF8C42',
+  cyan: '#22D3EE',
+  violet: '#A78BFA',
+  emerald: '#34D399',
+  amber: '#FBBF24',
+  grid: '#15181B',
+  tooltipBg: '#0A0B0C',
+  tooltipBorder: '#2A3036',
 };
 
 const COHORT_COLORS = [
-  '#FF4F00', '#FF8C42', '#FFB347',
-  '#6EE7B7', '#93C5FD', '#C4B5FD',
-  '#FCA5A5',
+  '#FF6B35', '#22D3EE', '#A78BFA',
+  '#34D399', '#FBBF24', '#F472B6', '#60A5FA',
 ];
 
-/* ─── Animated counter ──────────────────────────── */
+const TOOLTIP_PROPS = {
+  contentStyle: {
+    background: COLORS.tooltipBg,
+    border: `1px solid ${COLORS.tooltipBorder}`,
+    borderRadius: 0,
+    fontFamily: 'monospace',
+    fontSize: 12,
+    boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+  },
+  labelStyle: { color: COLORS.textDim },
+  itemStyle: { color: COLORS.text },
+  cursor: { fill: 'rgba(255,107,53,0.06)' },
+};
+
+const CARD_STYLE: React.CSSProperties = {
+  background: COLORS.surface,
+  border: `1px solid ${COLORS.border}`,
+  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)',
+};
+
+/* ─── Animated counter ─────────────────���────────── */
 function AnimatedNumber({ value }: { value: number }) {
   const [display, setDisplay] = useState(0);
   const prev = useRef(0);
@@ -134,6 +161,7 @@ export default function AdminPage() {
   const [pendingCount, setPendingCount] = useState(0);
   const [notificationsCount, setNotificationsCount] = useState(0);
   const [connectionsCount, setConnectionsCount] = useState(0);
+
   /* pending table */
   const [pendingUsers, setPendingUsers] = useState<PendingUserRow[]>([]);
   const [pendingLoading, setPendingLoading] = useState(true);
@@ -208,7 +236,7 @@ export default function AdminPage() {
         setPendingUsers(rows);
         setPendingCount(rows.length);
         setPendingLoading(false);
-        /* refresh exact user count after approvals */
+        /* refresh exact counts after approvals */
         fetchCounts();
       },
       (e) => { console.error('[admin] pending snap error', e); setPendingLoading(false); }
@@ -303,6 +331,12 @@ export default function AdminPage() {
       .map(([date, count]) => ({ date, count }));
   }, [approvedUsers, pageLoadTime]);
 
+  const totalSkillsCount = useMemo(() => {
+    const set = new Set<string>();
+    approvedUsers.forEach((u) => u.skillTags.forEach((t) => set.add(t)));
+    return set.size;
+  }, [approvedUsers]);
+
   const pendingCountLabel = useMemo(() =>
     pendingUsers.length === 1
       ? '1 pending approval'
@@ -340,20 +374,21 @@ export default function AdminPage() {
   /* ─── Loading / access states ────────────────── */
   if (pageLoading) {
     return (
-      <div className="min-h-screen bg-brand-black flex items-center justify-center">
-        <Loader2 className="w-5 h-5 animate-spin text-brand-neon" />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: COLORS.bg }}>
+        <Loader2 className="w-5 h-5 animate-spin" style={{ color: COLORS.accent }} />
       </div>
     );
   }
 
   if (authorized === false) {
     return (
-      <div className="min-h-screen bg-brand-black flex items-center justify-center px-6">
+      <div className="min-h-screen flex items-center justify-center px-6" style={{ background: COLORS.bg }}>
         <div className="text-center">
-          <h1 className="text-2xl font-display text-brand-white mb-3">Access Denied</h1>
-          <p className="text-brand-muted text-sm">Your account is not marked as an admin.</p>
+          <h1 className="text-2xl font-display mb-3" style={{ color: COLORS.text }}>Access Denied</h1>
+          <p className="text-sm" style={{ color: COLORS.textDim }}>Your account is not marked as an admin.</p>
           <button onClick={() => router.push('/app/feed')}
-            className="mt-6 text-brand-neon font-mono text-sm hover:underline">
+            className="mt-6 font-mono text-sm hover:underline"
+            style={{ color: COLORS.accent }}>
             ← Back to feed
           </button>
         </div>
@@ -363,34 +398,50 @@ export default function AdminPage() {
 
   /* ─── Render ─────────────────────────────────── */
   return (
-    <div className="min-h-screen bg-brand-black text-brand-white">
-      {/* header */}
-      <header className="sticky top-0 z-30 bg-black/90 backdrop-blur border-b border-brand-border">
+    <div className="min-h-screen" style={{ background: COLORS.bg, color: COLORS.text }}>
+
+      {/* ── Header ── */}
+      <header
+        className="sticky top-0 z-30 backdrop-blur"
+        style={{ background: 'rgba(8,9,10,0.96)', borderBottom: `1px solid ${COLORS.border}` }}>
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="relative w-3 h-3 flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full border border-brand-neon animate-ping opacity-40" />
-              <div className="w-1.5 h-1.5 bg-brand-neon rounded-full" />
+              <div
+                className="absolute inset-0 rounded-full border animate-ping opacity-40"
+                style={{ borderColor: COLORS.accent }} />
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: COLORS.accent }} />
             </div>
-            <span className="text-[11px] font-mono tracking-[0.2em] text-brand-neon uppercase">
+            <span
+              className="text-[11px] font-mono tracking-[0.3em] uppercase"
+              style={{ color: COLORS.accent }}>
               Mission Control
             </span>
-            <span className="text-[10px] font-mono text-brand-muted ml-2 hidden sm:block">
+            <span className="text-[10px] font-mono ml-2 hidden sm:block" style={{ color: COLORS.textFaint }}>
               LIVE
             </span>
           </div>
-          <button onClick={() => router.push('/app/feed')}
-            className="text-[11px] font-mono text-brand-muted hover:text-brand-white transition-colors">
-            ← Feed
-          </button>
+          <div className="flex items-center gap-6">
+            <span className="text-[10px] font-mono hidden sm:block" style={{ color: COLORS.textDim }}>
+              {usersCount} ALUMNI · {pendingCount} PENDING
+            </span>
+            <button
+              onClick={() => router.push('/app/feed')}
+              className="text-[11px] font-mono transition-colors"
+              style={{ color: COLORS.textDim }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = COLORS.text; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = COLORS.textDim; }}>
+              ← Feed
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-10 space-y-10">
+      <main className="max-w-7xl mx-auto px-6 py-12 space-y-8">
 
         {/* ── Section 1: Live counters ── */}
         <section>
-          <p className="text-[10px] font-mono tracking-[0.2em] text-brand-muted uppercase mb-4">
+          <p className="text-[10px] font-mono tracking-[0.25em] uppercase mb-4" style={{ color: COLORS.textFaint }}>
             Live Network Stats
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -400,80 +451,133 @@ export default function AdminPage() {
               { label: 'Connections', value: connectionsCount, accent: false },
               { label: 'Notifications', value: notificationsCount, accent: false },
             ].map(({ label, value, accent }) => (
-              <div key={label}
-                className={`relative overflow-hidden border ${accent ? 'border-orange-500/30 bg-gradient-to-br from-orange-500/10 to-transparent' : 'border-white/5 bg-white/[0.02]'} p-5 flex flex-col gap-2`}>
-                <span className={`text-4xl font-mono font-bold tracking-tight ${accent ? 'text-orange-400' : 'text-white'}`}>
+              <div
+                key={label}
+                className="relative overflow-hidden flex flex-col gap-2 p-6 transition-colors"
+                style={CARD_STYLE}>
+                {accent && (
+                  <div
+                    className="absolute top-0 left-0 right-0 h-[2px]"
+                    style={{ background: COLORS.accent }} />
+                )}
+                <span
+                  className="text-5xl font-mono font-bold tracking-tight"
+                  style={{ color: accent ? COLORS.accent : COLORS.text }}>
                   <AnimatedNumber value={value} />
                 </span>
-                <span className="text-[10px] font-mono text-white/30 uppercase tracking-[0.2em]">
+                <span
+                  className="text-[10px] font-mono uppercase tracking-[0.25em]"
+                  style={{ color: COLORS.textFaint }}>
                   {label}
                 </span>
                 {accent && (
-                  <div className="absolute top-3 right-3 w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+                  <div
+                    className="absolute top-3 right-3 w-1.5 h-1.5 rounded-full animate-pulse"
+                    style={{ background: COLORS.accent }} />
                 )}
               </div>
             ))}
           </div>
         </section>
 
+        {/* ── Stat strip ── */}
+        <section className="flex items-stretch" style={CARD_STYLE}>
+          {[
+            { label: 'Network Density', value: connectionsCount },
+            { label: 'Cohorts Represented', value: cohortData.length },
+            { label: 'Distinct Skills', value: totalSkillsCount },
+          ].map(({ label, value }, i) => (
+            <div
+              key={label}
+              className="flex-1 px-6 py-5 flex flex-col gap-1"
+              style={i > 0 ? { borderLeft: `1px solid ${COLORS.border}` } : {}}>
+              <span className="text-3xl font-mono font-bold" style={{ color: COLORS.text }}>
+                {chartsLoading ? <span style={{ color: COLORS.textFaint }}>—</span> : value}
+              </span>
+              <span className="text-[10px] font-mono uppercase tracking-[0.25em]" style={{ color: COLORS.textFaint }}>
+                {label}
+              </span>
+            </div>
+          ))}
+        </section>
+
         {/* ── Section 2: Growth + Cohort ── */}
-        <section className="grid lg:grid-cols-2 gap-6">
-          <div className="border border-brand-border bg-black/40 p-6">
-            <p className="text-[10px] font-mono tracking-[0.2em] text-brand-muted uppercase mb-6">
+        <section className="grid lg:grid-cols-2 gap-4">
+
+          {/* Growth — AreaChart */}
+          <div className="p-6" style={CARD_STYLE}>
+            <p className="text-[10px] font-mono tracking-[0.25em] uppercase mb-6" style={{ color: COLORS.textFaint }}>
               Approvals — Last 30 Days
             </p>
             {chartsLoading ? (
               <div className="h-48 flex items-center justify-center">
-                <Loader2 className="w-4 h-4 animate-spin text-brand-neon" />
+                <Loader2 className="w-4 h-4 animate-spin" style={{ color: COLORS.accent }} />
               </div>
             ) : growthData.length === 0 ? (
-              <div className="h-48 flex items-center justify-center text-brand-muted text-sm font-mono">
-                No data yet
+              <div className="h-48 flex items-center justify-center text-sm font-mono" style={{ color: COLORS.textFaint }}>
+                No approvals in the last 30 days
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={growthData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
-                  <XAxis dataKey="date" tick={{ fill: '#555', fontSize: 10 }} />
-                  <YAxis tick={{ fill: '#555', fontSize: 10 }} />
-                  <Tooltip
-                    contentStyle={{ background: COLORS.tooltip_bg, border: `1px solid ${COLORS.tooltip_border}`, borderRadius: 0 }}
-                    labelStyle={{ color: '#aaa', fontSize: 11 }}
-                    itemStyle={{ color: COLORS.primary }}
-                  />
-                  <Line
+                <AreaChart data={growthData}>
+                  <defs>
+                    <linearGradient id="accentFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={COLORS.accent} stopOpacity={0.35} />
+                      <stop offset="100%" stopColor={COLORS.accent} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke={COLORS.grid}
+                    vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fill: COLORS.textFaint, fontSize: 10, fontFamily: 'monospace' }}
+                    axisLine={{ stroke: COLORS.border }}
+                    tickLine={{ stroke: COLORS.border }} />
+                  <YAxis
+                    tick={{ fill: COLORS.textFaint, fontSize: 10, fontFamily: 'monospace' }}
+                    axisLine={{ stroke: COLORS.border }}
+                    tickLine={{ stroke: COLORS.border }}
+                    allowDecimals={false} />
+                  <Tooltip {...TOOLTIP_PROPS} />
+                  <Area
                     type="monotone"
                     dataKey="count"
-                    stroke={COLORS.primary}
-                    strokeWidth={2}
-                    dot={{ fill: COLORS.primary, r: 3 }}
-                    activeDot={{ r: 5, fill: COLORS.secondary }}
-                  />
-                </LineChart>
+                    stroke={COLORS.accent}
+                    strokeWidth={2.5}
+                    fill="url(#accentFill)"
+                    dot={false}
+                    activeDot={{ r: 5, fill: COLORS.accentBright, stroke: 'none' }} />
+                </AreaChart>
               </ResponsiveContainer>
             )}
           </div>
 
-          <div className="border border-brand-border bg-black/40 p-6">
-            <p className="text-[10px] font-mono tracking-[0.2em] text-brand-muted uppercase mb-6">
+          {/* Cohort BarChart */}
+          <div className="p-6" style={CARD_STYLE}>
+            <p className="text-[10px] font-mono tracking-[0.25em] uppercase mb-6" style={{ color: COLORS.textFaint }}>
               Alumni by Cohort
             </p>
             {chartsLoading ? (
               <div className="h-48 flex items-center justify-center">
-                <Loader2 className="w-4 h-4 animate-spin text-brand-neon" />
+                <Loader2 className="w-4 h-4 animate-spin" style={{ color: COLORS.accent }} />
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={cohortData} barSize={28}>
-                  <XAxis dataKey="cohort" tick={{ fill: '#555', fontSize: 11 }} />
-                  <YAxis tick={{ fill: '#555', fontSize: 11 }} />
-                  <Tooltip
-                    contentStyle={{ background: COLORS.tooltip_bg, border: `1px solid ${COLORS.tooltip_border}`, borderRadius: 0 }}
-                    labelStyle={{ color: '#aaa', fontSize: 11 }}
-                    itemStyle={{ color: COLORS.primary }}
-                    cursor={{ fill: 'rgba(255,79,0,0.05)' }}
-                  />
-                  <Bar dataKey="count" radius={[2, 2, 0, 0]}>
+                <BarChart data={cohortData} barSize={32}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} vertical={false} />
+                  <XAxis
+                    dataKey="cohort"
+                    tick={{ fill: COLORS.textFaint, fontSize: 11, fontFamily: 'monospace' }}
+                    axisLine={false}
+                    tickLine={false} />
+                  <YAxis
+                    tick={{ fill: COLORS.textFaint, fontSize: 11, fontFamily: 'monospace' }}
+                    axisLine={false}
+                    tickLine={false} />
+                  <Tooltip {...TOOLTIP_PROPS} />
+                  <Bar dataKey="count" radius={[3, 3, 0, 0]}>
                     {cohortData.map((_, i) => (
                       <Cell key={i} fill={COHORT_COLORS[i % COHORT_COLORS.length]} />
                     ))}
@@ -484,52 +588,63 @@ export default function AdminPage() {
           </div>
         </section>
 
-        {/* ── Section 3: Skills + Certificate ── */}
-        <section className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 border border-brand-border bg-black/40 p-6">
-            <p className="text-[10px] font-mono tracking-[0.2em] text-brand-muted uppercase mb-6">
+        {/* ── Section 3: Skills + Cohort Breakdown ── */}
+        <section className="grid lg:grid-cols-3 gap-4">
+
+          {/* Skills horizontal BarChart */}
+          <div className="lg:col-span-2 p-6" style={CARD_STYLE}>
+            <p className="text-[10px] font-mono tracking-[0.25em] uppercase mb-6" style={{ color: COLORS.textFaint }}>
               Top Skills in the Network
             </p>
             {chartsLoading ? (
               <div className="h-48 flex items-center justify-center">
-                <Loader2 className="w-4 h-4 animate-spin text-brand-neon" />
+                <Loader2 className="w-4 h-4 animate-spin" style={{ color: COLORS.accent }} />
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={skillData} layout="vertical" barSize={14}>
-                  <XAxis type="number" tick={{ fill: '#555', fontSize: 10 }} />
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={skillData} layout="vertical" barSize={16}>
+                  <defs>
+                    <linearGradient id="barAccent" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor={COLORS.accent} stopOpacity={1} />
+                      <stop offset="100%" stopColor={COLORS.accentBright} stopOpacity={0.7} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} horizontal={false} />
+                  <XAxis
+                    type="number"
+                    tick={{ fill: COLORS.textFaint, fontSize: 10, fontFamily: 'monospace' }}
+                    axisLine={false}
+                    tickLine={false} />
                   <YAxis
                     type="category"
                     dataKey="skill"
                     width={130}
-                    tick={{ fill: '#888', fontSize: 10 }}
-                  />
-                  <Tooltip
-                    contentStyle={{ background: COLORS.tooltip_bg, border: `1px solid ${COLORS.tooltip_border}`, borderRadius: 0 }}
-                    itemStyle={{ color: COLORS.primary }}
-                    cursor={{ fill: 'rgba(255,79,0,0.05)' }}
-                  />
-                  <Bar dataKey="count" fill={COLORS.primary} radius={[0, 2, 2, 0]} />
+                    tick={{ fill: COLORS.textDim, fontSize: 11, fontFamily: 'monospace' }}
+                    axisLine={false}
+                    tickLine={false} />
+                  <Tooltip {...TOOLTIP_PROPS} />
+                  <Bar dataKey="count" fill="url(#barAccent)" radius={[0, 3, 3, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
           </div>
 
-          <div className="border border-brand-border bg-black/40 p-6 flex flex-col">
-            <p className="text-[10px] font-mono tracking-[0.2em] text-brand-muted uppercase mb-6">
+          {/* Cohort Breakdown */}
+          <div className="p-6 flex flex-col" style={CARD_STYLE}>
+            <p className="text-[10px] font-mono tracking-[0.25em] uppercase mb-6" style={{ color: COLORS.textFaint }}>
               Cohort Breakdown
             </p>
             {chartsLoading ? (
               <div className="flex-1 flex items-center justify-center">
-                <Loader2 className="w-4 h-4 animate-spin text-brand-neon" />
+                <Loader2 className="w-4 h-4 animate-spin" style={{ color: COLORS.accent }} />
               </div>
             ) : (
               <div className="flex-1 flex flex-col justify-center gap-6">
                 <div>
-                  <div className="text-5xl font-mono font-bold text-white tracking-tight">
+                  <div className="text-5xl font-mono font-bold tracking-tight" style={{ color: COLORS.text }}>
                     {usersCount}
                   </div>
-                  <div className="text-[10px] font-mono text-white/30 uppercase tracking-[0.2em] mt-1">
+                  <div className="text-[10px] font-mono uppercase tracking-[0.25em] mt-1" style={{ color: COLORS.textFaint }}>
                     Total Alumni
                   </div>
                 </div>
@@ -539,11 +654,10 @@ export default function AdminPage() {
                     .slice(0, 3)
                     .map(({ cohort, count }, i) => (
                       <div key={cohort} className="flex items-center justify-between">
-                        <span className="text-sm font-mono text-white/60">{cohort}</span>
+                        <span className="text-sm font-mono" style={{ color: COLORS.textDim }}>{cohort}</span>
                         <span
                           className="text-sm font-mono font-bold"
-                          style={{ color: COHORT_COLORS[i % COHORT_COLORS.length] }}
-                        >
+                          style={{ color: COHORT_COLORS[i % COHORT_COLORS.length] }}>
                           {count} members
                         </span>
                       </div>
@@ -555,30 +669,38 @@ export default function AdminPage() {
         </section>
 
         {/* ── Section 4: Roles ── */}
-        <section className="border border-brand-border bg-black/40 p-6">
-          <p className="text-[10px] font-mono tracking-[0.2em] text-brand-muted uppercase mb-6">
+        <section className="p-6" style={CARD_STYLE}>
+          <p className="text-[10px] font-mono tracking-[0.25em] uppercase mb-6" style={{ color: COLORS.textFaint }}>
             Top Roles in the Network
           </p>
           {chartsLoading ? (
             <div className="h-48 flex items-center justify-center">
-              <Loader2 className="w-4 h-4 animate-spin text-brand-neon" />
+              <Loader2 className="w-4 h-4 animate-spin" style={{ color: COLORS.accent }} />
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={roleData} layout="vertical" barSize={14}>
-                <XAxis type="number" tick={{ fill: '#555', fontSize: 10 }} />
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={roleData} layout="vertical" barSize={16}>
+                <defs>
+                  <linearGradient id="barCyan" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor={COLORS.cyan} stopOpacity={1} />
+                    <stop offset="100%" stopColor="#0E7490" stopOpacity={0.6} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} horizontal={false} />
+                <XAxis
+                  type="number"
+                  tick={{ fill: COLORS.textFaint, fontSize: 10, fontFamily: 'monospace' }}
+                  axisLine={false}
+                  tickLine={false} />
                 <YAxis
                   type="category"
                   dataKey="role"
                   width={160}
-                  tick={{ fill: '#888', fontSize: 10 }}
-                />
-                <Tooltip
-                  contentStyle={{ background: COLORS.tooltip_bg, border: `1px solid ${COLORS.tooltip_border}`, borderRadius: 0 }}
-                  itemStyle={{ color: COLORS.secondary }}
-                  cursor={{ fill: 'rgba(255,79,0,0.05)' }}
-                />
-                <Bar dataKey="count" fill={COLORS.secondary} radius={[0, 2, 2, 0]} />
+                  tick={{ fill: COLORS.textDim, fontSize: 11, fontFamily: 'monospace' }}
+                  axisLine={false}
+                  tickLine={false} />
+                <Tooltip {...TOOLTIP_PROPS} />
+                <Bar dataKey="count" fill="url(#barCyan)" radius={[0, 3, 3, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -588,15 +710,21 @@ export default function AdminPage() {
         <section>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-display font-medium text-brand-white">
+              <h2 className="text-2xl font-display font-medium" style={{ color: COLORS.text }}>
                 Pending Approvals
               </h2>
-              <p className="text-brand-muted text-sm mt-1 font-mono">{pendingCountLabel}</p>
+              <p className="text-sm mt-1 font-mono" style={{ color: COLORS.textDim }}>
+                {pendingCountLabel}
+              </p>
             </div>
             {pendingCount > 0 && (
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-brand-neon rounded-full animate-pulse" />
-                <span className="text-[10px] font-mono text-brand-neon uppercase tracking-wider">
+                <div
+                  className="w-2 h-2 rounded-full animate-pulse"
+                  style={{ background: COLORS.accent }} />
+                <span
+                  className="text-[10px] font-mono uppercase tracking-wider"
+                  style={{ color: COLORS.accent }}>
                   Live
                 </span>
               </div>
@@ -604,71 +732,77 @@ export default function AdminPage() {
           </div>
 
           {actionError && (
-            <div className="mb-5 border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-400">
+            <div className="mb-5 p-3 text-sm text-red-400" style={{ border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)' }}>
               {actionError}
             </div>
           )}
           {actionNotice && (
-            <div className="mb-5 border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-300">
+            <div className="mb-5 p-3 text-sm text-amber-300" style={{ border: '1px solid rgba(251,191,36,0.3)', background: 'rgba(251,191,36,0.08)' }}>
               {actionNotice}
             </div>
           )}
 
           {pendingLoading ? (
-            <div className="flex items-center gap-3 py-12 justify-center text-brand-muted">
-              <Loader2 className="w-5 h-5 animate-spin text-brand-neon" />
-              <span className="text-sm font-mono">Loading approvals…</span>
+            <div className="flex items-center gap-3 py-12 justify-center">
+              <Loader2 className="w-5 h-5 animate-spin" style={{ color: COLORS.accent }} />
+              <span className="text-sm font-mono" style={{ color: COLORS.textDim }}>Loading approvals…</span>
             </div>
           ) : pendingUsers.length === 0 ? (
-            <div className="border border-brand-border p-8 text-center">
-              <p className="text-brand-muted text-sm font-mono">
+            <div className="p-8 text-center" style={CARD_STYLE}>
+              <p className="text-sm font-mono" style={{ color: COLORS.textDim }}>
                 No pending approvals — queue is clear.
               </p>
             </div>
           ) : (
             <>
-              <div className="hidden md:block overflow-x-auto border border-brand-border">
-                <table className="min-w-full divide-y divide-brand-border">
-                  <thead className="bg-black/60">
-                    <tr className="text-left text-[10px] font-mono uppercase tracking-wider text-brand-muted">
-                      <th className="px-5 py-4">Name</th>
-                      <th className="px-5 py-4">Contact</th>
-                      <th className="px-5 py-4">LinkedIn</th>
-                      <th className="px-5 py-4">Actions</th>
+              {/* Desktop table */}
+              <div className="hidden md:block overflow-x-auto" style={CARD_STYLE}>
+                <table className="min-w-full" style={{ borderCollapse: 'collapse' }}>
+                  <thead style={{ background: 'rgba(0,0,0,0.4)' }}>
+                    <tr>
+                      {['Name', 'Contact', 'LinkedIn', 'Actions'].map((h) => (
+                        <th
+                          key={h}
+                          className="px-5 py-4 text-left text-[10px] font-mono uppercase tracking-wider"
+                          style={{ color: COLORS.textFaint, borderBottom: `1px solid ${COLORS.border}` }}>
+                          {h}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-brand-border">
+                  <tbody>
                     {pendingUsers.map((pendingUser) => (
-                      <tr key={pendingUser.uid}
-                        className="hover:bg-white/[0.02] transition-colors">
+                      <tr
+                        key={pendingUser.uid}
+                        style={{ borderBottom: `1px solid ${COLORS.border}` }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLTableRowElement).style.background = COLORS.surfaceHover; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'; }}>
                         <td className="px-5 py-4 align-top">
-                          <div className="font-medium text-brand-white">
+                          <div className="font-medium" style={{ color: COLORS.text }}>
                             {pendingUser.fullName}
                           </div>
-                          <div className="mt-1 text-[11px] font-mono text-brand-muted">
+                          <div className="mt-1 text-[11px] font-mono" style={{ color: COLORS.textFaint }}>
                             Cohort {pendingUser.cohort}
                           </div>
-                          <div className="mt-1 text-[11px] font-mono text-brand-muted">
+                          <div className="mt-1 text-[11px] font-mono" style={{ color: COLORS.textFaint }}>
                             {formatRelativeTime(pendingUser.submittedAt)}
                           </div>
                         </td>
-                        <td className="px-5 py-4 align-top text-sm text-brand-white/80">
-                          <div>{pendingUser.email}</div>
-                          <div className="mt-1 text-brand-muted">{pendingUser.phone}</div>
+                        <td className="px-5 py-4 align-top text-sm" style={{ color: COLORS.textDim }}>
+                          <div style={{ color: COLORS.text }}>{pendingUser.email}</div>
+                          <div className="mt-1">{pendingUser.phone}</div>
                         </td>
                         <td className="px-5 py-4 align-top">
                           <a
                             href={toExternalUrl(pendingUser.linkedinUrl)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-brand-neon hover:underline text-sm"
-                          >
+                            className="text-sm hover:underline"
+                            style={{ color: COLORS.accent }}>
                             LinkedIn ↗
                           </a>
-                          <div className="mt-2 text-[11px] font-mono text-brand-muted">
-                            {pendingUser.certificateUrl
-                              ? '✓ Certificate uploaded'
-                              : 'No certificate'}
+                          <div className="mt-2 text-[11px] font-mono" style={{ color: COLORS.textFaint }}>
+                            {pendingUser.certificateUrl ? '✓ Certificate uploaded' : 'No certificate'}
                           </div>
                         </td>
                         <td className="px-5 py-4 align-top">
@@ -676,15 +810,14 @@ export default function AdminPage() {
                             <button
                               onClick={() => handleDecision(pendingUser.uid, 'approve')}
                               disabled={actionUid === pendingUser.uid}
-                              className="bg-green-500 text-black font-bold text-sm px-4 py-2 hover:bg-green-400 transition-colors disabled:opacity-50"
-                            >
+                              className="bg-green-500 text-black font-bold text-sm px-4 py-2 hover:bg-green-400 transition-colors disabled:opacity-50">
                               {actionUid === pendingUser.uid ? '…' : 'Approve'}
                             </button>
                             <button
                               onClick={() => handleDecision(pendingUser.uid, 'reject')}
                               disabled={actionUid === pendingUser.uid}
-                              className="bg-red-500/20 text-red-400 border border-red-500/40 font-bold text-sm px-4 py-2 hover:bg-red-500/30 transition-colors disabled:opacity-50"
-                            >
+                              className="font-bold text-sm px-4 py-2 transition-colors disabled:opacity-50 hover:bg-red-500/20"
+                              style={{ color: '#F87171', border: '1px solid rgba(248,113,113,0.3)', background: 'rgba(248,113,113,0.06)' }}>
                               {actionUid === pendingUser.uid ? '…' : 'Reject'}
                             </button>
                           </div>
@@ -695,30 +828,30 @@ export default function AdminPage() {
                 </table>
               </div>
 
+              {/* Mobile cards */}
               <div className="md:hidden space-y-3">
                 {pendingUsers.map((pendingUser) => (
-                  <div key={pendingUser.uid}
-                    className="border border-brand-border bg-black/40 p-5">
+                  <div key={pendingUser.uid} className="p-5" style={CARD_STYLE}>
                     <div className="mb-3">
-                      <h3 className="text-base font-medium text-brand-white">
+                      <h3 className="text-base font-medium" style={{ color: COLORS.text }}>
                         {pendingUser.fullName}
                       </h3>
-                      <p className="text-[11px] font-mono text-brand-muted mt-0.5">
+                      <p className="text-[11px] font-mono mt-0.5" style={{ color: COLORS.textFaint }}>
                         Cohort {pendingUser.cohort} · {formatRelativeTime(pendingUser.submittedAt)}
                       </p>
                     </div>
-                    <div className="space-y-1 text-sm text-brand-white/80 mb-4">
-                      <p>{pendingUser.email}</p>
-                      <p className="text-brand-muted">{pendingUser.phone}</p>
+                    <div className="space-y-1 text-sm mb-4">
+                      <p style={{ color: COLORS.text }}>{pendingUser.email}</p>
+                      <p style={{ color: COLORS.textDim }}>{pendingUser.phone}</p>
                       <a
                         href={toExternalUrl(pendingUser.linkedinUrl)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block text-brand-neon hover:underline"
-                      >
+                        className="block hover:underline"
+                        style={{ color: COLORS.accent }}>
                         LinkedIn ↗
                       </a>
-                      <p className="text-[11px] font-mono text-brand-muted">
+                      <p className="text-[11px] font-mono" style={{ color: COLORS.textFaint }}>
                         {pendingUser.certificateUrl ? '✓ Certificate uploaded' : 'No certificate'}
                       </p>
                     </div>
@@ -726,15 +859,14 @@ export default function AdminPage() {
                       <button
                         onClick={() => handleDecision(pendingUser.uid, 'approve')}
                         disabled={actionUid === pendingUser.uid}
-                        className="flex-1 bg-green-500 text-black font-bold py-2.5 hover:bg-green-400 transition-colors disabled:opacity-50"
-                      >
+                        className="flex-1 bg-green-500 text-black font-bold py-2.5 hover:bg-green-400 transition-colors disabled:opacity-50">
                         {actionUid === pendingUser.uid ? '…' : 'Approve'}
                       </button>
                       <button
                         onClick={() => handleDecision(pendingUser.uid, 'reject')}
                         disabled={actionUid === pendingUser.uid}
-                        className="flex-1 bg-red-500/20 text-red-400 border border-red-500/40 font-bold py-2.5 hover:bg-red-500/30 transition-colors disabled:opacity-50"
-                      >
+                        className="flex-1 font-bold py-2.5 transition-colors disabled:opacity-50 hover:bg-red-500/20"
+                        style={{ color: '#F87171', border: '1px solid rgba(248,113,113,0.3)', background: 'rgba(248,113,113,0.06)' }}>
                         {actionUid === pendingUser.uid ? '…' : 'Reject'}
                       </button>
                     </div>
